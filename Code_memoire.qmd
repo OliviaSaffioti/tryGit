@@ -1,0 +1,6343 @@
+---
+title: "Codes"
+author: "Ton nom"
+date: today
+format:
+  html:
+    toc: true
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+editor: visual
+---
+
+## Packages/libraries
+
+```{r}
+
+library(tidyverse)
+
+library(psych)
+
+library(lavaan)
+
+library(lme4)
+
+library(broom.mixed)
+
+library(modelsummary)
+
+library(sjPlot)
+
+library(stargazer)
+
+library(dplyr)
+
+library(knitr)
+
+library(kableExtra)
+
+library(htmltools)
+
+library(webshot2)
+
+library(marginaleffects)
+```
+
+## Importer les données
+
+```{r}
+
+Data_2_1 <- read.csv("ESS_2022.csv")
+
+Data_2_2 <- read.csv("ESS_2022_2.csv")
+
+Data_2 <- bind_rows(Data_2_1, Data_2_2)
+```
+
+## FAISONS DES TESTS AVEC LA BASE DE DONNÉES DE 2022
+
+### RECODAGE DES DONNÉES
+
+```{r}
+
+# 1) varibles liées au people-centrism 
+
+Data_2_new <- Data_2 %>%
+  mutate(
+    votedir_recoded  = ifelse(votedir %in% 0:10, votedir, NA),
+    wpestop_recoded  = ifelse(wpestop %in% 0:10, wpestop, NA),
+    viepol_recoded   = ifelse(viepol %in% 0:10, viepol, NA)
+  )
+
+
+
+table(Data_2_new$viepol_recoded)
+
+table(Data_2_new$wpestop_recoded)
+
+table(Data_2_new$votedir_recoded)
+
+
+# 2) variables liées à l'anti-élitisme (proxy)
+
+Data_2_new <- Data_2_new %>% mutate (trstplt_recoded = ifelse(trstplt %in% 0:10, trstplt, NA))
+
+Data_2_new <- Data_2_new %>%
+  mutate(trstplt_recoded = case_when (trstplt_recoded == 10 ~ 0,
+                                       trstplt_recoded == 9 ~ 1,
+                                       trstplt_recoded == 8 ~ 2,
+                                       trstplt_recoded == 7 ~ 3,
+                                       trstplt_recoded == 6 ~ 4,
+                                       trstplt_recoded == 5 ~ 5,
+                                       trstplt_recoded == 4 ~ 6,
+                                       trstplt_recoded == 3 ~ 7,
+                                       trstplt_recoded == 2 ~ 8,
+                                       trstplt_recoded == 1 ~ 9,
+                                       trstplt_recoded == 0 ~ 10,
+                                       TRUE ~ NA_real_))# recodage à l'envers 
+
+table(Data_2_new$trstplt_recoded)
+
+
+Data_2_new <- Data_2_new %>% mutate (trstprt_recoded = ifelse(trstprt %in% 0:10, trstprt, NA))
+
+Data_2_new <- Data_2_new %>%
+  mutate(trstprt_recoded = case_when (trstprt_recoded == 10 ~ 0,
+                                       trstprt_recoded == 9 ~ 1,
+                                       trstprt_recoded == 8 ~ 2,
+                                       trstprt_recoded == 7 ~ 3,
+                                       trstprt_recoded == 6 ~ 4,
+                                       trstprt_recoded == 5 ~ 5,
+                                       trstprt_recoded == 4 ~ 6,
+                                       trstprt_recoded == 3 ~ 7,
+                                       trstprt_recoded == 2 ~ 8,
+                                       trstprt_recoded == 1 ~ 9,
+                                       trstprt_recoded == 0 ~ 10,
+                                       TRUE ~ NA_real_))
+
+table(Data_2_new$trstprt_recoded)
+
+Data_2_new <- Data_2_new %>% mutate (trstprl_recoded = ifelse(trstprl %in% 0:10, trstprl, NA))
+
+Data_2_new <- Data_2_new %>%
+  mutate(trstprl_recoded = case_when (trstprl_recoded == 10 ~ 0,
+                                       trstprl_recoded == 9 ~ 1,
+                                       trstprl_recoded == 8 ~ 2,
+                                       trstprl_recoded == 7 ~ 3,
+                                       trstprl_recoded == 6 ~ 4,
+                                       trstprl_recoded == 5 ~ 5,
+                                       trstprl_recoded == 4 ~ 6,
+                                       trstprl_recoded == 3 ~ 7,
+                                       trstprl_recoded == 2 ~ 8,
+                                       trstprl_recoded == 1 ~ 9,
+                                       trstprl_recoded == 0 ~ 10,
+                                       TRUE ~ NA_real_))
+
+
+table(Data_2_new$trstprl_recoded)
+
+Data_2_new <- Data_2_new %>% mutate (psppipla_recoded = ifelse(psppipla %in% 1:5, psppipla, NA))
+
+Data_2_new <- Data_2_new %>%
+  mutate(psppipla_recoded = 6 - psppipla_recoded) # recodage à l'envers 
+
+table(Data_2_new$psppipla_recoded)
+
+
+Data_2_new <- Data_2_new %>% mutate (psppsgva_recoded = ifelse(psppsgva %in% 1:5, psppsgva, NA))
+
+Data_2_new <- Data_2_new %>%
+  mutate(psppsgva_recoded = 6 - psppsgva_recoded) # recodage à l'envers 
+
+table(Data_2_new$psppsgva_recoded)
+
+
+#3) Variables liées à la satisfaction envers le système 
+
+Data_2_new <- Data_2_new %>% mutate (stfdem_recoded = ifelse(stfdem %in% 0:10, stfdem, NA))
+
+table(Data_2_new$stfdem_recoded)
+
+Data_2_new <- Data_2_new %>% mutate (stfgov_recoded = ifelse(stfgov %in% 0:10, stfgov, NA))
+
+table(Data_2_new$stfgov_recoded)
+
+
+#4) Variable liée à l'euroscepticisme 
+
+Data_2_new <- Data_2_new %>% mutate (euftf_recoded = ifelse(euftf %in% 0:10, euftf, NA))
+
+table(Data_2_new$euftf_recoded)
+
+
+#5) Variables liées au nativisme 
+
+
+Data_2_new <- Data_2_new %>% mutate(Acceuil_immigration = ifelse(imdfetn %in% 1:4, imdfetn, NA))
+
+table(Data_2_new$Acceuil_immigration)
+
+Data_2_new <- Data_2_new %>% mutate(Acceuil_immigration_pays_pauvre = ifelse(impcntr %in% 1:4, impcntr, NA))
+
+table(Data_2_new$Acceuil_immigration_pays_pauvre)
+                                                                     
+Data_2_new <- Data_2_new %>% mutate(imbgeco_recoded = ifelse(imbgeco %in% 0:10, imbgeco, NA))
+
+Data_2_new <- Data_2_new %>% mutate(imbgeco_recoded = case_when(
+  imbgeco_recoded == 0 ~ 10,
+  imbgeco_recoded == 1 ~ 9,
+  imbgeco_recoded == 2 ~ 8,
+  imbgeco_recoded == 3 ~ 7,
+  imbgeco_recoded == 4 ~ 6,
+  imbgeco_recoded == 5 ~ 5,
+  imbgeco_recoded == 6 ~ 4,
+  imbgeco_recoded == 7 ~ 3,
+  imbgeco_recoded == 8 ~ 2,
+  imbgeco_recoded == 9 ~ 1,
+  imbgeco_recoded == 10 ~ 0,
+  TRUE ~ NA_real_))
+
+table(Data_2_new$imbgeco_recoded)
+
+Data_2_new <- Data_2_new %>% mutate(imueclt_recoded = ifelse(imueclt %in% 0:10, imueclt, NA))
+
+Data_2_new <- Data_2_new %>% mutate(imueclt_recoded = case_when(
+  imueclt_recoded == 0 ~ 10,
+  imueclt_recoded == 1 ~ 9,
+  imueclt_recoded == 2 ~ 8,
+  imueclt_recoded == 3 ~ 7,
+  imueclt_recoded == 4 ~ 6,
+  imueclt_recoded == 5 ~ 5,
+  imueclt_recoded == 6 ~ 4,
+  imueclt_recoded == 7 ~ 3,
+  imueclt_recoded == 8 ~ 2,
+  imueclt_recoded == 9 ~ 1,
+  imueclt_recoded == 10 ~ 0,
+  TRUE ~ NA_real_))
+
+table(Data_2_new$imueclt_recoded)
+
+Data_2_new <- Data_2_new %>% mutate(imwbcnt_recoded = ifelse(imwbcnt %in% 0:10, imwbcnt, NA))
+
+Data_2_new <- Data_2_new %>% mutate(imwbcnt_recoded = case_when(
+  imwbcnt_recoded == 0 ~ 10,
+  imwbcnt_recoded == 1 ~ 9,
+  imwbcnt_recoded == 2 ~ 8,
+  imwbcnt_recoded == 3 ~ 7,
+  imwbcnt_recoded == 4 ~ 6,
+  imwbcnt_recoded == 5 ~ 5,
+  imwbcnt_recoded == 6 ~ 4,
+  imwbcnt_recoded == 7 ~ 3,
+  imwbcnt_recoded == 8 ~ 2,
+  imwbcnt_recoded == 9 ~ 1,
+  imwbcnt_recoded == 10 ~ 0,
+  TRUE ~ NA_real_))
+
+
+table(Data_2_new$imwbcnt_recoded)
+
+
+
+# Variables liées au conservatisme social 
+
+
+Data_2_new <- Data_2_new %>% mutate(rghmgpr_recoded = ifelse(rghmgpr %in% 0:10, rghmgpr, NA))
+
+Data_2_new <- Data_2_new %>% mutate(rghmgpr_recoded = case_when(
+  rghmgpr_recoded == 0 ~ 10,
+  rghmgpr_recoded == 1 ~ 9,
+  rghmgpr_recoded == 2 ~ 8,
+  rghmgpr_recoded == 3 ~ 7,
+  rghmgpr_recoded == 4 ~ 6,
+  rghmgpr_recoded == 5 ~ 5,
+  rghmgpr_recoded == 6 ~ 4,
+  rghmgpr_recoded == 7 ~ 3,
+  rghmgpr_recoded == 8 ~ 2,
+  rghmgpr_recoded == 9 ~ 1,
+  rghmgpr_recoded == 10 ~ 0,
+  TRUE ~ NA_real_))
+
+table(Data_2_new$rghmgpr_recoded)
+
+Data_2_new <- Data_2_new %>% mutate(freehms_recoded = ifelse(freehms %in% 1:5, freehms, NA))
+
+Data_2_new <- Data_2_new %>% mutate(hmsfmlsh_recoded = ifelse(hmsfmlsh %in% 1:5, hmsfmlsh, NA))
+
+Data_2_new <- Data_2_new %>% mutate(hmsfmlsh_recoded = case_when(
+  hmsfmlsh_recoded == 1 ~ 5,
+  hmsfmlsh_recoded == 2 ~ 4,
+  hmsfmlsh_recoded == 3 ~ 3,
+  hmsfmlsh_recoded == 4 ~ 2,
+  hmsfmlsh_recoded == 5 ~ 1,
+  TRUE ~ NA_real_))
+
+table(Data_2_new$hmsfmlsh_recoded)
+
+Data_2_new <- Data_2_new %>% mutate(hmsacld_recoded = ifelse(hmsacld %in% 1:5, hmsacld, NA))
+
+
+table(Data_2_new$hmsacld_recoded)
+
+
+Data_2_new <- Data_2_new %>% mutate(imptrad_recoded = ifelse(imptrad %in% 1:6, imptrad, NA))
+
+Data_2_new <- Data_2_new %>% mutate(imptrad_recoded = case_when(
+  imptrad_recoded == 1 ~ 6,
+  imptrad_recoded == 2 ~ 5,
+  imptrad_recoded == 3 ~ 4,
+  imptrad_recoded == 4 ~ 3,
+  imptrad_recoded == 5 ~ 2,
+  imptrad_recoded == 6 ~ 1,
+  TRUE ~ NA_real_))
+
+table(Data_2_new$imptrad_recoded)
+
+
+# Variables liées à l'autoritarisme 
+
+
+Data_2_new <- Data_2_new %>% mutate(accalaw_recoded = ifelse(accalaw %in% 0:10, accalaw, NA))
+
+Data_2_new <- Data_2_new %>% mutate(lrnobed_recoded = ifelse(lrnobed %in% 1:5, lrnobed, NA))
+
+
+Data_2_new <- Data_2_new %>% mutate(lrnobed_recoded = case_when(
+  lrnobed_recoded == 1 ~ 5,
+  lrnobed_recoded == 2 ~ 4,
+  lrnobed_recoded == 3 ~ 3,
+  lrnobed_recoded == 4 ~ 2,
+  lrnobed_recoded == 5 ~ 1,
+  TRUE ~ NA_real_))
+
+
+Data_2_new <- Data_2_new %>% mutate(loylead_recoded = ifelse(loylead %in% 1:5, loylead, NA))
+
+Data_2_new <- Data_2_new %>% mutate(loylead_recoded = case_when(
+  loylead_recoded == 1 ~ 5,
+  loylead_recoded == 2 ~ 4,
+  loylead_recoded == 3 ~ 3,
+  loylead_recoded == 4 ~ 2,
+  loylead_recoded == 5 ~ 1,
+  TRUE ~ NA_real_))
+
+
+
+# Autres variables potentiellement liées à l'autoritarisme 
+
+Data_2_new <- Data_2_new %>% mutate(ipstrgv_recoded = case_when(
+  ipstrgv %in% 1:2 ~ 3,
+  ipstrgv %in% 3:4 ~ 2,
+  ipstrgv %in% 5:6 ~ 1,
+  TRUE ~ NA_real_))
+
+
+table(Data_2_new$ipstrgv_recoded)
+
+
+Data_2_new <- Data_2_new %>% mutate(impsafe_recoded = case_when(
+  impsafe %in% 1:2 ~ 3,
+  impsafe %in% 3:4 ~ 2,
+  impsafe %in% 5:6 ~ 1,
+  TRUE ~ NA_real_))
+
+
+table(Data_2_new$impsafe_recoded)
+
+
+Data_2_new <- Data_2_new %>% mutate(ipbhprp_recoded = case_when(
+  ipbhprp %in% 1:2 ~ 3,
+  ipbhprp %in% 3:4 ~ 2,
+  ipbhprp %in% 5:6 ~ 1,
+  TRUE ~ NA_real_))
+
+table(Data_2_new$ipbhprp_recoded)
+
+
+Data_2_new <- Data_2_new %>% mutate(ipfrule_recoded = case_when(
+  ipfrule %in% 1:2 ~ 3,
+  ipfrule %in% 3:4 ~ 2,
+  ipfrule %in% 5:6 ~ 1,
+  TRUE ~ NA_real_))
+
+table(Data_2_new$ipfrule_recoded)
+
+Data_2_new <- Data_2_new %>% mutate(imptrad_recoded = case_when(
+  imptrad %in% 1:2 ~ 3,
+  imptrad %in% 3:4 ~ 2,
+  imptrad %in% 5:6 ~ 1,
+  TRUE ~ NA_real_))
+
+table(Data_2_new$imptrad_recoded)
+
+
+```
+
+### INDICES DE POPULISME
+
+- People-centrism = fonctionne
+
+- Anti-élitisme = proxy avec confiance envers élites politiques (confiance envers les élites, influence decisions gouvernement et influence dans système)
+
+```{r}
+
+# 1) People-centrism 
+
+Variables_indice <- Data_2_new [, c("votedir_recoded", "wpestop_recoded", "viepol_recoded")]
+
+Variables_indice <- na.omit(Variables_indice)
+
+cronbachAlpha <- round(psych::alpha(Variables_indice)$total$raw_alpha, 2)
+
+factorAnal <- factanal(Variables_indice, factors = 1)
+
+factorLoadings <- as.numeric(factorAnal$loadings[,1])
+
+factor1stEigen <- round(eigen(cor(Variables_indice))$values[1], 2)
+
+factorVarNames <- c(
+  "Final say referendums",
+  "Will can't be stopped",
+  "Views Ord people prevail elite"
+)
+
+ggplot(data.frame(factorVarNames, factorLoadings), 
+       aes(x = factorVarNames, y = factorLoadings)) + 
+  
+  coord_flip() +
+  
+  geom_bar(stat = "identity", colour = "deeppink2", fill = "deeppink2",
+           size = 1, width = 0.4) +
+  
+  geom_text(aes(label = round(factorLoadings, 2)), 
+            vjust = 0.35, hjust = -0.3) +
+  
+ 
+  geom_hline(yintercept = 0.3, colour = "black", linetype = "longdash") +
+  
+
+  annotate("text",
+           label = paste("Cronbach alpha =", cronbachAlpha),
+           x = 1,
+           y = 1.3,
+           size = 5) +
+  
+  annotate("text",
+           label = paste("First Eigenvalue =", factor1stEigen),
+           x = 2,
+           y = 1.3,
+           size = 5) +
+  
+  scale_y_continuous(name = "Factor loadings",
+                     limits = c(0, 1.5),
+                     breaks = seq(0, 1, by = 0.1)) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(axis.text.y = element_text(size = 14), 
+        axis.title.x = element_text(size = 14),
+        axis.text.x  = element_text(size = 11),
+        panel.grid = element_blank())
+
+
+
+
+
+
+
+
+
+
+
+
+# 2) Anti-élitisme 
+
+
+Variables_indice <- Data_2_new [, c("trstplt_recoded", "trstprt_recoded", "trstprl_recoded")]
+
+Variables_indice <- na.omit(Variables_indice)
+
+cronbachAlpha <- round(psych::alpha(Variables_indice)$total$raw_alpha, 2)
+
+factorAnal <- factanal(Variables_indice, factors = 1)
+
+factorLoadings <- as.numeric(factorAnal$loadings[,1])
+
+factor1stEigen <- round(eigen(cor(Variables_indice))$values[1], 2)
+
+factorVarNames <- c(
+  "Conf politiciens",
+  "Conf partis politiques",
+  "Conf parlement"
+)
+
+ggplot(data.frame(factorVarNames, factorLoadings), 
+       aes(x = factorVarNames, y = factorLoadings)) + 
+  
+  coord_flip() +
+  
+  geom_bar(stat = "identity", colour = "black", fill = "black",
+           size = 1, width = 0.4) +
+  
+  geom_text(aes(label = round(factorLoadings, 2)), 
+            vjust = 0.35, hjust = -0.3) +
+  
+ 
+  geom_hline(yintercept = 0.3, colour = "gray", linetype = "longdash") +
+  
+
+  annotate("text",
+           label = paste("Cronbach alpha =", cronbachAlpha),
+           x = 1,
+           y = 1.3,
+           size = 5) +
+  
+  annotate("text",
+           label = paste("First Eigenvalue =", factor1stEigen),
+           x = 2,
+           y = 1.3,
+           size = 5) +
+  
+  scale_y_continuous(name = "Factor loadings",
+                     limits = c(0, 1.5),
+                     breaks = seq(0, 1, by = 0.1)) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(axis.text.y = element_text(size = 14), 
+        axis.title.x = element_text(size = 14),
+        axis.text.x  = element_text(size = 11),
+        panel.grid = element_blank())
+
+
+
+
+
+
+
+
+
+
+
+Variables_indice <- Data_2_new [, c("trstplt_recoded", "trstprt_recoded", "trstprl_recoded", "stfdem_recoded","stfgov_recoded")]
+
+Variables_indice <- na.omit(Variables_indice)
+
+cronbachAlpha <- round(psych::alpha(Variables_indice)$total$raw_alpha, 2)
+
+factorAnal <- factanal(Variables_indice, factors = 1)
+
+factorLoadings <- as.numeric(factorAnal$loadings[,1])
+
+factor1stEigen <- round(eigen(cor(Variables_indice))$values[1], 2)
+
+factorVarNames <- c(
+  "Conf politiciens",
+  "Conf partis politiques",
+  "Conf parlement",
+  "Satisfaction democracie",
+  "Satisfaction gouv"
+)
+
+ggplot(data.frame(factorVarNames, factorLoadings), 
+       aes(x = factorVarNames, y = factorLoadings)) + 
+  
+  coord_flip() +
+  
+  geom_bar(stat = "identity", colour = "black", fill = "black",
+           size = 1, width = 0.4) +
+  
+  geom_text(aes(label = round(factorLoadings, 2)), 
+            vjust = 0.35, hjust = -0.3) +
+  
+ 
+  geom_hline(yintercept = 0.3, colour = "gray", linetype = "longdash") +
+  
+
+  annotate("text",
+           label = paste("Cronbach alpha =", cronbachAlpha),
+           x = 1,
+           y = 1.3,
+           size = 5) +
+  
+  annotate("text",
+           label = paste("First Eigenvalue =", factor1stEigen),
+           x = 2,
+           y = 1.3,
+           size = 5) +
+  
+  scale_y_continuous(name = "Factor loadings",
+                     limits = c(0, 1.5),
+                     breaks = seq(0, 1, by = 0.1)) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(axis.text.y = element_text(size = 14), 
+        axis.title.x = element_text(size = 14),
+        axis.text.x  = element_text(size = 11),
+        panel.grid = element_blank())
+
+
+
+
+
+
+
+
+
+
+
+
+Variables_indice <- Data_2_new [, c("trstplt_recoded", "trstprt_recoded", "trstprl_recoded", "stfdem_recoded")]
+
+Variables_indice <- na.omit(Variables_indice)
+
+cronbachAlpha <- round(psych::alpha(Variables_indice)$total$raw_alpha, 2)
+
+factorAnal <- factanal(Variables_indice, factors = 1)
+
+factorLoadings <- as.numeric(factorAnal$loadings[,1])
+
+factor1stEigen <- round(eigen(cor(Variables_indice))$values[1], 2)
+
+factorVarNames <- c(
+  "Conf politiciens",
+  "Conf partis politiques",
+  "Conf parlement",
+  "Satisfaction democracie"
+)
+
+ggplot(data.frame(factorVarNames, factorLoadings), 
+       aes(x = factorVarNames, y = factorLoadings)) + 
+  
+  coord_flip() +
+  
+  geom_bar(stat = "identity", colour = "black", fill = "black",
+           size = 1, width = 0.4) +
+  
+  geom_text(aes(label = round(factorLoadings, 2)), 
+            vjust = 0.35, hjust = -0.3) +
+  
+ 
+  geom_hline(yintercept = 0.3, colour = "gray", linetype = "longdash") +
+  
+
+  annotate("text",
+           label = paste("Cronbach alpha =", cronbachAlpha),
+           x = 1,
+           y = 1.3,
+           size = 5) +
+  
+  annotate("text",
+           label = paste("First Eigenvalue =", factor1stEigen),
+           x = 2,
+           y = 1.3,
+           size = 5) +  scale_y_continuous(name = "Factor loadings",
+                     limits = c(0, 1.5),
+                     breaks = seq(0, 1, by = 0.1)) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(axis.text.y = element_text(size = 14), 
+        axis.title.x = element_text(size = 14),
+        axis.text.x  = element_text(size = 11),
+        panel.grid = element_blank())
+
+
+
+
+
+
+
+
+
+
+# Test indice avec confiance politiciens, perception influence gouvernement et perception de si le systéme leur permet d'avoir une influence
+
+
+Variables_indice <- Data_2_new [, c("trstplt_recoded", "psppipla_recoded", "psppsgva_recoded")]
+
+Variables_indice <- na.omit(Variables_indice)
+
+cronbachAlpha <- round(psych::alpha(Variables_indice)$total$raw_alpha, 2)
+
+factorAnal <- factanal(Variables_indice, factors = 1)
+
+factorLoadings <- as.numeric(factorAnal$loadings[,1])
+
+factor1stEigen <- round(eigen(cor(Variables_indice))$values[1], 2)
+
+factorVarNames <- c(
+  "Conf politiciens",
+  "Influence système",
+  "Influence dans decisions gouv"
+)
+
+ggplot(data.frame(factorVarNames, factorLoadings), 
+       aes(x = factorVarNames, y = factorLoadings)) + 
+  
+  coord_flip() +
+  
+  geom_bar(stat = "identity", colour = "deeppink2", fill = "deeppink2",
+           size = 1, width = 0.4) +
+  
+  geom_text(aes(label = round(factorLoadings, 2)), 
+            vjust = 0.35, hjust = -0.3) +
+  
+ 
+  geom_hline(yintercept = 0.3, colour = "black", linetype = "longdash") +
+  
+
+  annotate("text",
+           label = paste("Cronbach alpha =", cronbachAlpha),
+           x = 1,
+           y = 1.3,
+           size = 5) +
+  
+  annotate("text",
+           label = paste("First Eigenvalue =", factor1stEigen),
+           x = 2,
+           y = 1.3,
+           size = 5) +
+  
+  scale_y_continuous(name = "Factor loadings",
+                     limits = c(0, 1.5),
+                     breaks = seq(0, 1, by = 0.1)) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(axis.text.y = element_text(size = 14), 
+        axis.title.x = element_text(size = 14),
+        axis.text.x  = element_text(size = 11),
+        panel.grid = element_blank())
+
+
+
+
+
+# P.S : LES MESSAGES D'ERREUR SONT ISSUS DU FAIT QUE LES VARIABLES NE SONT PAS CODÉES DANS LE MÊME SENS DONC IL FAUT TOUTES LES RECODÉES DANS LE MÊME SENS ET ILS DISPARAÎTRONT
+
+
+
+
+
+
+
+
+# TESTER LES 6 ITEMS DU POPULISME ENSEMBLE  : LES RESULTATS CONFIRMENT QUE LE POPULISME SE TRADUIT PAR DEUX DIMENSIONS DISTINCTES ET NON UNE SEULE. DONC LES INDICATEURS DOIVENT ÊTRE PRIS SÉPAREMMENT ET NON ENSMBLE DANS UN MEME INDICE. 
+
+
+Variables_indice <- Data_2_new [, c("trstplt_recoded", "psppipla_recoded", "psppsgva_recoded", "votedir_recoded", "wpestop_recoded", "viepol_recoded")]
+
+Variables_indice <- na.omit(Variables_indice)
+
+cronbachAlpha <- round(psych::alpha(Variables_indice)$total$raw_alpha, 2)
+
+factorAnal <- factanal(Variables_indice, factors = 1)
+
+factorLoadings <- as.numeric(factorAnal$loadings[,1])
+
+factor1stEigen <- round(eigen(cor(Variables_indice))$values[1], 2)
+
+factorVarNames <- c(
+  "Conf politiciens",
+  "Influence système",
+  "Influence dans decisions gouv",
+  "Final say referendums",
+  "Will can't be stopped",
+  "Views Ord people prevail elite"
+)
+
+ggplot(data.frame(factorVarNames, factorLoadings), 
+       aes(x = factorVarNames, y = factorLoadings)) + 
+  
+  coord_flip() +
+  
+  geom_bar(stat = "identity", colour = "black", fill = "black",
+           size = 1, width = 0.4) +
+  
+  geom_text(aes(label = round(factorLoadings, 2)), 
+            vjust = 0.35, hjust = -0.3) +
+  
+ 
+  geom_hline(yintercept = 0.3, colour = "gray", linetype = "longdash") +
+  
+
+  annotate("text",
+           label = paste("Cronbach alpha =", cronbachAlpha),
+           x = 1,
+           y = 1.3,
+           size = 5) +
+  
+  annotate("text",
+           label = paste("First Eigenvalue =", factor1stEigen),
+           x = 2,
+           y = 1.3,
+           size = 5) +
+  
+  scale_y_continuous(name = "Factor loadings",
+                     limits = c(0, 1.5),
+                     breaks = seq(0, 1, by = 0.1)) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(axis.text.y = element_text(size = 14), 
+        axis.title.x = element_text(size = 14),
+        axis.text.x  = element_text(size = 11),
+        panel.grid = element_blank())
+
+
+
+
+# EST-CE QUE LES VARIABLES DE MES INDICES DE POPULISME SONT CORRELEES ? 
+
+#1) ANTI-ELITISME 
+
+cor(Data_2_new[, c("trstplt_recoded", "psppipla_recoded", "psppsgva_recoded")], use = "complete.obs") 
+
+# Correlations moyennes selon variables mais un indice est defendable selon ce que je cherche a mesurer avec ces trois variables 
+
+
+#2) PEOPLE-CENTRISM
+
+cor(Data_2_new[, c( "votedir_recoded", "wpestop_recoded", "viepol_recoded")], use = "complete.obs") 
+
+# Les correlations supposent un indice defendable 
+```
+
+## Nativisme
+
+```{r}
+
+# AVEC LES 5 VARIABLES 
+
+
+Variables_indice <- Data_2_new [, c("Acceuil_immigration", "Acceuil_immigration_pays_pauvre", "imbgeco_recoded", "imueclt_recoded", "imwbcnt_recoded")]
+
+Variables_indice <- na.omit(Variables_indice)
+
+cronbachAlpha <- round(psych::alpha(Variables_indice)$total$raw_alpha, 2)
+
+factorAnal <- factanal(Variables_indice, factors = 1)
+
+factorLoadings <- as.numeric(factorAnal$loadings[,1])
+
+factor1stEigen <- round(eigen(cor(Variables_indice))$values[1], 2)
+
+factorVarNames <- c(
+  "Acceuil dif ethnie",
+  "Acceuil pays pauvre",
+  "Mauvaise economie",
+  "Mauvaise culture",
+  "Mauvaise qualité vie"
+)
+
+graph_indice_nativisme <- ggplot(data.frame(factorVarNames, factorLoadings), 
+       aes(x = factorVarNames, y = factorLoadings)) + 
+  
+  coord_flip() +
+  
+  geom_bar(stat = "identity", colour = "cornflowerblue", fill = "cornflowerblue",
+           size = 1, width = 0.4) +
+  
+  geom_text(aes(label = round(factorLoadings, 2)), 
+            vjust = 0.35, hjust = -0.3) +
+  
+ 
+  geom_hline(yintercept = 0.3, colour = "gray", linetype = "longdash") +
+  
+
+  annotate("text",
+           label = paste("Cronbach alpha =", cronbachAlpha),
+           x = 1,
+           y = 1.3,
+           size = 5) +
+  
+  annotate("text",
+           label = paste("First Eigenvalue =", factor1stEigen),
+           x = 2,
+           y = 1.3,
+           size = 5) +
+  
+  scale_y_continuous(name = "Factor loadings",
+                     limits = c(0, 1.5),
+                     breaks = seq(0, 1, by = 0.1)) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(axis.text.y = element_text(size = 14), 
+        axis.title.x = element_text(size = 14),
+        axis.text.x  = element_text(size = 11),
+        panel.grid = element_blank())
+
+
+
+# AUTRES TESTS EN ENLEVANT LES VARIABLES D'ACCEUIL D'IMMIGRATION
+
+
+Variables_indice <- Data_2_new [, c("Acceuil_immigration", "imbgeco_recoded", "imueclt_recoded", "imwbcnt_recoded")]
+
+Variables_indice <- na.omit(Variables_indice)
+
+cronbachAlpha <- round(psych::alpha(Variables_indice)$total$raw_alpha, 2)
+
+factorAnal <- factanal(Variables_indice, factors = 1)
+
+factorLoadings <- as.numeric(factorAnal$loadings[,1])
+
+factor1stEigen <- round(eigen(cor(Variables_indice))$values[1], 2)
+
+factorVarNames <- c(
+  "Acceuil dif ethnie",
+  "Mauvaise economie",
+  "Mauvaise culture",
+  "Mauvaise qualité vie"
+)
+
+ggplot(data.frame(factorVarNames, factorLoadings), 
+       aes(x = factorVarNames, y = factorLoadings)) + 
+  
+  coord_flip() +
+  
+  geom_bar(stat = "identity", colour = "cornflowerblue", fill = "cornflowerblue",
+           size = 1, width = 0.4) +
+  
+  geom_text(aes(label = round(factorLoadings, 2)), 
+            vjust = 0.35, hjust = -0.3) +
+  
+ 
+  geom_hline(yintercept = 0.3, colour = "gray", linetype = "longdash") +
+  
+
+  annotate("text",
+           label = paste("Cronbach alpha =", cronbachAlpha),
+           x = 1,
+           y = 1.3,
+           size = 5) +
+  
+  annotate("text",
+           label = paste("First Eigenvalue =", factor1stEigen),
+           x = 2,
+           y = 1.3,
+           size = 5) +
+  
+  scale_y_continuous(name = "Factor loadings",
+                     limits = c(0, 1.5),
+                     breaks = seq(0, 1, by = 0.1)) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(axis.text.y = element_text(size = 14), 
+        axis.title.x = element_text(size = 14),
+        axis.text.x  = element_text(size = 11),
+        panel.grid = element_blank())
+
+
+
+
+
+
+
+Variables_indice <- Data_2_new [, c("Acceuil_immigration_pays_pauvre", "imbgeco_recoded", "imueclt_recoded", "imwbcnt_recoded")]
+
+Variables_indice <- na.omit(Variables_indice)
+
+cronbachAlpha <- round(psych::alpha(Variables_indice)$total$raw_alpha, 2)
+
+factorAnal <- factanal(Variables_indice, factors = 1)
+
+factorLoadings <- as.numeric(factorAnal$loadings[,1])
+
+factor1stEigen <- round(eigen(cor(Variables_indice))$values[1], 2)
+
+factorVarNames <- c(
+  "Acceuil pays pauvre",
+  "Mauvaise economie",
+  "Mauvaise culture",
+  "Mauvaise qualité vie"
+)
+
+ggplot(data.frame(factorVarNames, factorLoadings), 
+       aes(x = factorVarNames, y = factorLoadings)) + 
+  
+  coord_flip() +
+  
+  geom_bar(stat = "identity", colour = "cornflowerblue", fill = "cornflowerblue",
+           size = 1, width = 0.4) +
+  
+  geom_text(aes(label = round(factorLoadings, 2)), 
+            vjust = 0.35, hjust = -0.3) +
+  
+ 
+  geom_hline(yintercept = 0.3, colour = "gray", linetype = "longdash") +
+  
+
+  annotate("text",
+           label = paste("Cronbach alpha =", cronbachAlpha),
+           x = 1,
+           y = 1.3,
+           size = 5) +
+  
+  annotate("text",
+           label = paste("First Eigenvalue =", factor1stEigen),
+           x = 2,
+           y = 1.3,
+           size = 5) +
+  
+  scale_y_continuous(name = "Factor loadings",
+                     limits = c(0, 1.5),
+                     breaks = seq(0, 1, by = 0.1)) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(axis.text.y = element_text(size = 14), 
+        axis.title.x = element_text(size = 14),
+        axis.text.x  = element_text(size = 11),
+        panel.grid = element_blank())
+
+
+
+
+
+Variables_indice <- Data_2_new [, c("imbgeco_recoded", "imueclt_recoded", "imwbcnt_recoded")]
+
+Variables_indice <- na.omit(Variables_indice)
+
+cronbachAlpha <- round(psych::alpha(Variables_indice)$total$raw_alpha, 2)
+
+factorAnal <- factanal(Variables_indice, factors = 1)
+
+factorLoadings <- as.numeric(factorAnal$loadings[,1])
+
+factor1stEigen <- round(eigen(cor(Variables_indice))$values[1], 2)
+
+factorVarNames <- c(
+  "Mauvaise economie",
+  "Mauvaise culture",
+  "Mauvaise qualité vie"
+)
+
+ggplot(data.frame(factorVarNames, factorLoadings), 
+       aes(x = factorVarNames, y = factorLoadings)) + 
+  
+  coord_flip() +
+  
+  geom_bar(stat = "identity", colour = "cornflowerblue", fill = "cornflowerblue",
+           size = 1, width = 0.4) +
+  
+  geom_text(aes(label = round(factorLoadings, 2)), 
+            vjust = 0.35, hjust = -0.3) +
+  
+ 
+  geom_hline(yintercept = 0.3, colour = "gray", linetype = "longdash") +
+  
+
+  annotate("text",
+           label = paste("Cronbach alpha =", cronbachAlpha),
+           x = 1,
+           y = 1.3,
+           size = 5) +
+  
+  annotate("text",
+           label = paste("First Eigenvalue =", factor1stEigen),
+           x = 2,
+           y = 1.3,
+           size = 5) +
+  
+  scale_y_continuous(name = "Factor loadings",
+                     limits = c(0, 1.5),
+                     breaks = seq(0, 1, by = 0.1)) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(axis.text.y = element_text(size = 14), 
+        axis.title.x = element_text(size = 14),
+        axis.text.x  = element_text(size = 11),
+        panel.grid = element_blank())
+
+
+
+
+
+
+graph_indice_nativisme
+
+
+# EST CE QUE LES VARIABLES DE CET INDICE SONT CORRELEES ? 
+
+cor(Data_2_new[, c("Acceuil_immigration", "Acceuil_immigration_pays_pauvre", "imbgeco_recoded", "imueclt_recoded", "imwbcnt_recoded")], use = "complete.obs") 
+
+# REPONSE CORRELATION BONNE, DONC INDICE DEFENDABLE 
+
+```
+
+## Autoritarisme
+
+```{r}
+
+# Indice de la moyenne entre leader fort et obéissance et respect de l'autorité chez les enfants 
+
+
+Data_2_new <- Data_2_new %>% mutate(Indice_autoritaire = rowMeans(
+    select(., loylead_recoded, lrnobed_recoded),
+    na.rm = TRUE
+  ))
+
+
+table(Data_2_new$Indice_autoritaire)
+
+
+# TEST POUR CREER UN INDICE AVEC TROIS VARIABLES MAIS NE FONCTIONNE PAS DONC GARDER L'IDEE DE MOYENNE ENTRE LES DEUX VARIABLES OBEISSANCE ET RESPECT AUTORITÉ ENFANTS ET LOYAUTÉ ENVERS LEADER COMME IMPORTANTE
+
+
+Variables_indice <- Data_Jeunes [, c("accalaw_recoded", "loylead_recoded", "lrnobed_recoded", "imptrad_recoded")]
+
+Variables_indice <- na.omit(Variables_indice)
+
+cronbachAlpha <- round(psych::alpha(Variables_indice)$total$raw_alpha, 2)
+
+factorAnal <- factanal(Variables_indice, factors = 1)
+
+factorLoadings <- as.numeric(factorAnal$loadings[,1])
+
+factor1stEigen <- round(eigen(cor(Variables_indice))$values[1], 2)
+
+factorVarNames <- c(
+  "Leader + loi",
+  "loyauté leader",
+  "respect obéissance",
+  "imp trad"
+)
+
+ggplot(data.frame(factorVarNames, factorLoadings), 
+       aes(x = factorVarNames, y = factorLoadings)) + 
+  
+  coord_flip() +
+  
+  geom_bar(stat = "identity", colour = "cornflowerblue", fill = "cornflowerblue",
+           size = 1, width = 0.4) +
+  
+  geom_text(aes(label = round(factorLoadings, 2)), 
+            vjust = 0.35, hjust = -0.3) +
+  
+  
+  geom_hline(yintercept = 0.3, colour = "gray", linetype = "longdash") +
+  
+  
+  annotate("text",
+           label = paste("Cronbach alpha =", cronbachAlpha),
+           x = 1,
+           y = 1.3,
+           size = 5) +
+  
+  annotate("text",
+           label = paste("First Eigenvalue =", factor1stEigen),
+           x = 2,
+           y = 1.3,
+           size = 5) +
+  
+  scale_y_continuous(name = "Factor loadings",
+                     limits = c(0, 1.5),
+                     breaks = seq(0, 1, by = 0.1)) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(axis.text.y = element_text(size = 14), 
+        axis.title.x = element_text(size = 14),
+        axis.text.x  = element_text(size = 11),
+        panel.grid = element_blank())
+
+
+
+
+
+# Test avec autres variables
+
+
+
+Variables_indice <- Data_Est_Jeunes [, c("ipstrgv_recoded", "impsafe_recoded", "ipbhprp_recoded", "ipfrule_recoded", "imptrad_recoded")]
+
+Variables_indice <- na.omit(Variables_indice)
+
+cronbachAlpha <- round(psych::alpha(Variables_indice)$total$raw_alpha, 2)
+
+factorAnal <- factanal(Variables_indice, factors = 1)
+
+factorLoadings <- as.numeric(factorAnal$loadings[,1])
+
+factor1stEigen <- round(eigen(cor(Variables_indice))$values[1], 2)
+
+factorVarNames <- c(
+  "Gouv fort",
+  "Imp sécurité",
+  "Imp comportement",
+  "Imp regles",
+  "Imp traditions"
+)
+
+ggplot(data.frame(factorVarNames, factorLoadings), 
+       aes(x = factorVarNames, y = factorLoadings)) + 
+  
+  coord_flip() +
+  
+  geom_bar(stat = "identity", colour = "cornflowerblue", fill = "cornflowerblue",
+           size = 1, width = 0.4) +
+  
+  geom_text(aes(label = round(factorLoadings, 2)), 
+            vjust = 0.35, hjust = -0.3) +
+  
+  
+  geom_hline(yintercept = 0.3, colour = "gray", linetype = "longdash") +
+  
+  
+  annotate("text",
+           label = paste("Cronbach alpha =", cronbachAlpha),
+           x = 1,
+           y = 1.3,
+           size = 5) +
+  
+  annotate("text",
+           label = paste("First Eigenvalue =", factor1stEigen),
+           x = 2,
+           y = 1.3,
+           size = 5) +
+  
+  scale_y_continuous(name = "Factor loadings",
+                     limits = c(0, 1.5),
+                     breaks = seq(0, 1, by = 0.1)) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(axis.text.y = element_text(size = 14), 
+        axis.title.x = element_text(size = 14),
+        axis.text.x  = element_text(size = 11),
+        panel.grid = element_blank())
+
+
+```
+
+## Conservatisme social
+
+```{r}
+
+# Droits minoritées au sens large 
+
+# Droits des minoritées sexuelles
+
+# Traditions ? 
+
+
+
+
+Variables_indice <- Data_2_new [, c("freehms_recoded", "hmsfmlsh_recoded", "hmsacld_recoded", "imptrad_recoded", "rghmgpr_recoded")]
+
+Variables_indice <- na.omit(Variables_indice)
+
+cronbachAlpha <- round(psych::alpha(Variables_indice)$total$raw_alpha, 2)
+
+factorAnal <- factanal(Variables_indice, factors = 1)
+
+factorLoadings <- as.numeric(factorAnal$loadings[,1])
+
+factor1stEigen <- round(eigen(cor(Variables_indice))$values[1], 2)
+
+factorVarNames <- c(
+  "Liberté vie gays",
+  "Honte proche gay",
+  "enfants gays",
+  "Importance traditions",
+  "Droits minorités"
+)
+
+ggplot(data.frame(factorVarNames, factorLoadings), 
+       aes(x = factorVarNames, y = factorLoadings)) + 
+  
+  coord_flip() +
+  
+  geom_bar(stat = "identity", colour = "cornflowerblue", fill = "cornflowerblue",
+           size = 1, width = 0.4) +
+  
+  geom_text(aes(label = round(factorLoadings, 2)), 
+            vjust = 0.35, hjust = -0.3) +
+  
+ 
+  geom_hline(yintercept = 0.3, colour = "gray", linetype = "longdash") +
+  
+
+  annotate("text",
+           label = paste("Cronbach alpha =", cronbachAlpha),
+           x = 1,
+           y = 1.3,
+           size = 5) +
+  
+  annotate("text",
+           label = paste("First Eigenvalue =", factor1stEigen),
+           x = 2,
+           y = 1.3,
+           size = 5) +
+  
+  scale_y_continuous(name = "Factor loadings",
+                     limits = c(0, 1.5),
+                     breaks = seq(0, 1, by = 0.1)) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(axis.text.y = element_text(size = 14), 
+        axis.title.x = element_text(size = 14),
+        axis.text.x  = element_text(size = 11),
+        panel.grid = element_blank())
+
+
+
+
+
+
+Variables_indice <- Data_Jeunes [, c("freehms_recoded", "hmsfmlsh_recoded", "hmsacld_recoded", "imptrad_recoded")]
+
+Variables_indice <- na.omit(Variables_indice)
+
+cronbachAlpha <- round(psych::alpha(Variables_indice)$total$raw_alpha, 2)
+
+factorAnal <- factanal(Variables_indice, factors = 1)
+
+factorLoadings <- as.numeric(factorAnal$loadings[,1])
+
+factor1stEigen <- round(eigen(cor(Variables_indice))$values[1], 2)
+
+factorVarNames <- c(
+  "Liberté vie gays",
+  "Honte proche gay",
+  "enfants gays", 
+  "imp traditions"
+)
+
+ggplot(data.frame(factorVarNames, factorLoadings), 
+       aes(x = factorVarNames, y = factorLoadings)) + 
+  
+  coord_flip() +
+  
+  geom_bar(stat = "identity", colour = "cornflowerblue", fill = "cornflowerblue",
+           size = 1, width = 0.4) +
+  
+  geom_text(aes(label = round(factorLoadings, 2)), 
+            vjust = 0.35, hjust = -0.3) +
+  
+ 
+  geom_hline(yintercept = 0.3, colour = "gray", linetype = "longdash") +
+  
+
+  annotate("text",
+           label = paste("Cronbach alpha =", cronbachAlpha),
+           x = 1,
+           y = 1.3,
+           size = 5) +
+  
+  annotate("text",
+           label = paste("First Eigenvalue =", factor1stEigen),
+           x = 2,
+           y = 1.3,
+           size = 5) +
+  
+  scale_y_continuous(name = "Factor loadings",
+                     limits = c(0, 1.5),
+                     breaks = seq(0, 1, by = 0.1)) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(axis.text.y = element_text(size = 14), 
+        axis.title.x = element_text(size = 14),
+        axis.text.x  = element_text(size = 11),
+        panel.grid = element_blank())
+
+
+
+
+
+
+
+Variables_indice <- Data_2_new [, c("freehms_recoded", "imptrad_recoded", "rghmgpr_recoded")]
+
+Variables_indice <- na.omit(Variables_indice)
+
+cronbachAlpha <- round(psych::alpha(Variables_indice)$total$raw_alpha, 2)
+
+factorAnal <- factanal(Variables_indice, factors = 1)
+
+factorLoadings <- as.numeric(factorAnal$loadings[,1])
+
+factor1stEigen <- round(eigen(cor(Variables_indice))$values[1], 2)
+
+factorVarNames <- c(
+  "Liberté vie gays",
+  "Importance traditions",
+  "Droits minorités"
+)
+
+ggplot(data.frame(factorVarNames, factorLoadings), 
+       aes(x = factorVarNames, y = factorLoadings)) + 
+  
+  coord_flip() +
+  
+  geom_bar(stat = "identity", colour = "cornflowerblue", fill = "cornflowerblue",
+           size = 1, width = 0.4) +
+  
+  geom_text(aes(label = round(factorLoadings, 2)), 
+            vjust = 0.35, hjust = -0.3) +
+  
+ 
+  geom_hline(yintercept = 0.3, colour = "gray", linetype = "longdash") +
+  
+
+  annotate("text",
+           label = paste("Cronbach alpha =", cronbachAlpha),
+           x = 1,
+           y = 1.3,
+           size = 5) +
+  
+  annotate("text",
+           label = paste("First Eigenvalue =", factor1stEigen),
+           x = 2,
+           y = 1.3,
+           size = 5) +
+  
+  scale_y_continuous(name = "Factor loadings",
+                     limits = c(0, 1.5),
+                     breaks = seq(0, 1, by = 0.1)) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(axis.text.y = element_text(size = 14), 
+        axis.title.x = element_text(size = 14),
+        axis.text.x  = element_text(size = 11),
+        panel.grid = element_blank())
+
+
+
+
+Variables_indice <- Data_2_new [, c("freehms_recoded", "hmsfmlsh_recoded", "hmsacld_recoded", "rghmgpr_recoded")]
+
+Variables_indice <- na.omit(Variables_indice)
+
+cronbachAlpha <- round(psych::alpha(Variables_indice)$total$raw_alpha, 2)
+
+factorAnal <- factanal(Variables_indice, factors = 1)
+
+factorLoadings <- as.numeric(factorAnal$loadings[,1])
+
+factor1stEigen <- round(eigen(cor(Variables_indice))$values[1], 2)
+
+factorVarNames <- c(
+  "Liberté vie gays",
+  "Honte proche gay",
+  "enfants gays",
+  "Droits minorités"
+)
+
+ggplot(data.frame(factorVarNames, factorLoadings), 
+       aes(x = factorVarNames, y = factorLoadings)) + 
+  
+  coord_flip() +
+  
+  geom_bar(stat = "identity", colour = "cornflowerblue", fill = "cornflowerblue",
+           size = 1, width = 0.4) +
+  
+  geom_text(aes(label = round(factorLoadings, 2)), 
+            vjust = 0.35, hjust = -0.3) +
+  
+ 
+  geom_hline(yintercept = 0.3, colour = "gray", linetype = "longdash") +
+  
+
+  annotate("text",
+           label = paste("Cronbach alpha =", cronbachAlpha),
+           x = 1,
+           y = 1.3,
+           size = 5) +
+  
+  annotate("text",
+           label = paste("First Eigenvalue =", factor1stEigen),
+           x = 2,
+           y = 1.3,
+           size = 5) +
+  
+  scale_y_continuous(name = "Factor loadings",
+                     limits = c(0, 1.5),
+                     breaks = seq(0, 1, by = 0.1)) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(axis.text.y = element_text(size = 14), 
+        axis.title.x = element_text(size = 14),
+        axis.text.x  = element_text(size = 11),
+        panel.grid = element_blank())
+
+
+
+
+
+Variables_indice <- Data_2_new [, c("freehms_recoded", "hmsfmlsh_recoded", "hmsacld_recoded", "imptrad_recoded")]
+
+Variables_indice <- na.omit(Variables_indice)
+
+cronbachAlpha <- round(psych::alpha(Variables_indice)$total$raw_alpha, 2)
+
+factorAnal <- factanal(Variables_indice, factors = 1)
+
+factorLoadings <- as.numeric(factorAnal$loadings[,1])
+
+factor1stEigen <- round(eigen(cor(Variables_indice))$values[1], 2)
+
+factorVarNames <- c(
+  "Liberté vie gays",
+  "Honte proche gay",
+  "enfants gays",
+  "Imp trad"
+)
+
+ggplot(data.frame(factorVarNames, factorLoadings), 
+       aes(x = factorVarNames, y = factorLoadings)) + 
+  
+  coord_flip() +
+  
+  geom_bar(stat = "identity", colour = "cornflowerblue", fill = "cornflowerblue",
+           size = 1, width = 0.4) +
+  
+  geom_text(aes(label = round(factorLoadings, 2)), 
+            vjust = 0.35, hjust = -0.3) +
+  
+ 
+  geom_hline(yintercept = 0.3, colour = "gray", linetype = "longdash") +
+  
+
+  annotate("text",
+           label = paste("Cronbach alpha =", cronbachAlpha),
+           x = 1,
+           y = 1.3,
+           size = 5) +
+  
+  annotate("text",
+           label = paste("First Eigenvalue =", factor1stEigen),
+           x = 2,
+           y = 1.3,
+           size = 5) +
+  
+  scale_y_continuous(name = "Factor loadings",
+                     limits = c(0, 1.5),
+                     breaks = seq(0, 1, by = 0.1)) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(axis.text.y = element_text(size = 14), 
+        axis.title.x = element_text(size = 14),
+        axis.text.x  = element_text(size = 11),
+        panel.grid = element_blank())
+
+
+
+
+
+
+# EST-CE QUE LES TROIS VARIABLES PORTANT SUR LES DROITS DES GAYS SONT CORRELEES ? 
+
+
+cor(Data_2_new[, c("freehms_recoded", "hmsfmlsh_recoded", "hmsacld_recoded")], use = "complete.obs")
+
+
+# REPONSE = OUI, ON PEUT CREER UN INDICE COMPOSITE AVEC NORMALEMENT 
+
+
+```
+
+## Redistribution économique
+
+```{r}
+
+# Le gouvermenet devrait oeuvrer à la redistribution économique 
+
+Data_2_new <- Data_2_new %>% mutate(gincdif_recoded = ifelse (gincdif %in% 1:5, gincdif, NA))
+
+```
+
+## Euroscepticisme
+
+```{r}
+
+# Unification européenne est-elle allée trop loin ?
+
+
+Data_2_new <- Data_2_new %>% mutate(euftf_recoded = ifelse (euftf %in% 0:10, euftf, NA))
+
+Data_2_new <- Data_2_new %>% mutate(euftf_recoded = case_when (euftf_recoded == 0 ~ 10,
+                                                               euftf_recoded == 1 ~ 9,
+                                                               euftf_recoded == 2 ~ 8,
+                                                               euftf_recoded == 3 ~ 7,
+                                                               euftf_recoded == 4 ~ 6,
+                                                               euftf_recoded == 5 ~ 5,
+                                                               euftf_recoded == 6 ~ 4,
+                                                               euftf_recoded == 7 ~ 3,
+                                                               euftf_recoded == 8 ~ 2,
+                                                               euftf_recoded == 9 ~ 1,
+                                                               euftf_recoded == 10 ~ 0,
+                                                               TRUE~ NA_real_))
+                                                               
+```
+
+## Variables de contrôle
+
+```{r}
+
+# Genre 
+
+Data_2_new <- Data_2_new %>% mutate (gender = case_when (gndr == 1 ~ 1 ,
+                                                         gndr == 2 ~ 0, 
+                                                         TRUE ~ NA_real_))
+
+table(Data_2_new$gender)
+
+# Niveau éducation (À REVERIFIER LE RECODAGE AU CAS OÙ PUISQUE CATÉGORIES 0 ET AUTRE RECODÉES EN NA AVEC LES REPONSES ABSENTES)
+
+
+Data_2_new <- Data_2_new %>% mutate (Niv_education = case_when (
+eisced %in% c(1, 2) ~ 1,
+eisced %in% c(3, 4, 5) ~ 2,
+eisced %in% c(6, 7) ~ 3,
+TRUE ~ NA_real_ ))
+
+table(Data_2_new$Niv_education)
+
+
+# Niv économique 
+
+Data_2_new <- Data_2_new %>% mutate (Revenu = ifelse (hinctnta %in% 1:10, hinctnta, NA ))
+
+table(Data_2_new$Revenu)
+
+Data_2_new <- Data_2_new %>% mutate (Revenu_2 = ifelse (hincfel %in% 1:4, hincfel, NA ))
+
+Data_2_new <- Data_2_new %>% mutate (Revenu_conf = case_when (Revenu_2 == 1 ~ 4,
+                                                              Revenu_2 == 2 ~ 3,
+                                                              Revenu_2 == 3 ~ 2,
+                                                              Revenu_2 == 4 ~ 1,
+                                                              TRUE ~ NA_real_
+                                                              ))
+
+
+
+# Milieu de vie rural ou urbain
+
+
+Data_2_new <- Data_2_new %>% mutate (Milieu_rural_urbain = ifelse (domicil %in% 1:5, domicil, NA ))
+
+
+Data_2_new <- Data_2_new %>% mutate (Milieu_rural_urbain = case_when (Milieu_rural_urbain %in% c(1,2,3) ~ 0,
+                                                                      Milieu_rural_urbain %in% c(4,5) ~ 1,
+                                                                      TRUE ~ NA_real_
+))
+
+table(Data_2_new$Milieu_rural_urbain)
+
+
+
+
+
+
+
+
+```
+
+```{r}
+# Convertir les variables de controle en variables factorielles 
+
+
+Data_2_new <- Data_2_new %>%
+  mutate(
+    gender = factor(gender, 
+                    levels = c(0,1),
+                    labels = c("Femme","Homme")),
+    
+    Niv_education = factor(Niv_education,
+                           levels = c(1,2,3),
+                           labels = c("Faible","Intermédiaire","Élevé")),
+    
+    Milieu_rural_urbain = factor(Milieu_rural_urbain,
+                                 levels = c(0,1),
+                                 labels = c("Zone urbaine", "Zone rurale")),
+    
+    Revenu_conf = factor(Revenu_conf,
+                         levels = c(1,2,3,4),
+                         labels = c("Très difficile de vivre confortablement","Difficile de vivre confortablement", "Capacité à s’en sortir","Suffisant pour vivre confortablement"))
+  )
+
+
+
+```
+
+# VARIABLE POUR IDENTIFIER LES JEUNES
+
+```{r}
+
+
+Data_2_new <- Data_2_new %>% mutate(groupe_age = case_when ( agegroup == 1 ~ "15-24",
+                                                             agegroup == 2 ~ "25-34",
+                                                             agegroup == 3 ~ "35-44",
+                                                             agegroup == 4 ~ "45-54",
+                                                             agegroup == 5 ~ "55-64",
+                                                             agegroup == 6 ~ "65-74",
+                                                             agegroup == 7 ~ "75 et +",
+                                                             TRUE ~ NA_character_))
+
+
+
+Data_2_new <- Data_2_new %>% mutate(Jeunes = ifelse(groupe_age %in% c("15-24", "25-34"), 1, 0))
+
+
+table(Data_2_new$Jeunes)
+
+
+
+```
+
+## Créer une variable pour différencier les régions
+
+```{r}
+
+
+Data_2_new <- Data_2_new %>% mutate(Region = case_when(
+  cntry %in% c("BG", "CZ", "EE", "HR", "HU", "LT", "LV", "ME", "MK", "PL", "RS", "SI", "SK") ~ "Est",
+                                                       cntry %in% c("AT", "BE", "CH", "DE", "ES", "FI", "FR", "GB", "GR", "IE", "IS", "IT", "NL", "NO", "PT", "SE") ~ "Ouest", TRUE ~ NA_character_
+                                                       ))
+
+table(Data_2_new$Region)
+```
+
+## Créer une variable de soutien envers les partis d'extrême droite populistes
+
+```{r}
+
+# En comptant tous les pays 
+
+
+vector_ED <- c("prtclffr", "prtclfde", "prtcleit", "prtcldat", "prtclges", "prtclebe", "prtclhhu", "prtclipl", "prtclfpt", "prtclhch", "prtcldse", "prtclgnl", "prtclfsi", "prtvtecz", "prtclhee", "prtclesk", "prtclebg")
+
+
+Data_2_new <- Data_2_new %>%
+  mutate(across(
+    all_of(vector_ED),
+    ~ replace(.x, .x %in% c(66, 77, 88, 99), NA)
+  ))
+
+
+Data_2_new <- Data_2_new %>%
+  mutate(Prox_ED  =
+           case_when(
+             cntry == "FR" & prtclffr == 11 ~ 1,
+             cntry == "DE" & prtclfde == 6 ~ 1,
+             cntry == "IT" & prtcleit == 5 ~ 1,
+             cntry == "IT" & prtcleit == 3 ~ 1,
+             cntry == "AT" & prtcldat == 3 ~ 1,
+             cntry == "ES" & prtclges == 3 ~ 1,
+             cntry == "BE" & prtclebe == 6 ~ 1,
+             cntry == "HU" & prtclhhu == 3 ~ 1,
+             cntry == "PL" & prtclipl == 2 ~ 1,
+             cntry == "PT" & prtclfpt == 4 ~ 1,
+             cntry == "CH" & prtclhch == 1 ~ 1,
+             cntry == "CH" & prtclhch == 9 ~ 1,
+             cntry == "CH" & prtclhch == 14 ~ 1,
+             cntry == "SE" & prtcldse == 7 ~ 1,
+             cntry == "NL" & prtclgnl == 3 ~ 1,
+             cntry == "SI" & prtclfsi == 11 ~ 1,
+             cntry == "CZ" & prtvtecz == 8 ~ 1,
+             cntry == "EE" & prtclhee == 6 ~ 1,
+             cntry == "SK" & prtclesk == 3 ~ 1,
+             cntry == "BG" & prtclebg == 9 ~ 1,
+             cntry == "BG" & prtclebg == 8 ~ 1,
+             cntry == "BG" & prtclebg == 6 ~ 1,
+             cntry == "BG" & prtclebg == 7 ~ 1,
+             TRUE ~ 0
+           ))
+
+
+table(Data_2_new$Prox_ED)
+
+```
+
+# FILTRER LA BASE DE DONNEES SELON LES PAYS POUR DISTINGUER LES DONNES SELON LES PAYS
+
+```{r}
+
+Data_Germany <- Data_Jeunes %>% filter(cntry == "DE")
+
+
+Data_France <- Data_Jeunes %>% filter(cntry == "FR")
+
+
+Data_Spain <- Data_Jeunes %>% filter(cntry == "ES")
+
+
+
+Data_Italy<- Data_Jeunes %>% filter(cntry == "IT")
+
+
+
+
+Data_Belgium <- Data_Jeunes %>% filter(cntry == "BE")
+
+
+
+
+
+Data_Sweden <- Data_Jeunes %>% filter(cntry == "SE")
+
+
+
+
+
+Data_Netherlands <- Data_Jeunes %>% filter(cntry == "NL")
+
+
+
+
+Data_Portugal <- Data_Jeunes %>% filter(cntry == "PT")
+
+
+
+
+
+Data_Austria <- Data_Jeunes %>% filter(cntry == "AT")
+
+
+
+
+Data_Switzerland <- Data_Jeunes %>% filter(cntry == "CH")
+
+
+
+
+
+
+
+
+
+
+
+Data_Poland <- Data_Jeunes %>% filter(cntry == "PL")
+
+
+
+Data_Hungary <- Data_Jeunes %>% filter(cntry == "HU")
+
+
+
+Data_Slovenia <- Data_Jeunes %>% filter(cntry == "SI")
+
+
+
+Data_Czechia <- Data_Jeunes %>% filter(cntry == "CZ")
+
+
+
+
+
+
+
+
+Data_Slovakia <- Data_Jeunes %>% filter(cntry == "SK")
+
+
+
+Data_Estonia <- Data_Jeunes %>% filter(cntry == "EE")
+
+
+Data_Bulgaria <- Data_Jeunes %>% filter(cntry == "BG")
+
+```
+
+## CRÉER LES INDICES DE POPULISME, DE NATIVISME ET D'AUTORITARISME
+
+```{r}
+
+# Nativisme
+
+Data_2_new <- Data_2_new %>% mutate(Nativisme_moyenne = rowMeans(select(., imbgeco_recoded, imueclt_recoded, imwbcnt_recoded),na.rm = TRUE))
+
+
+# Conservatisme social
+
+Data_2_new <- Data_2_new %>% mutate(Conservatisme_moyenne = rowMeans(select(., freehms_recoded, hmsfmlsh_recoded, hmsacld_recoded), na.rm = TRUE))
+
+
+# Autoritarisme
+
+Data_2_new <- Data_2_new %>%
+  mutate(accalaw_recoded_2 = (accalaw_recoded - 0) / (10 - 0) * (5 - 1) + 1)
+
+Data_2_new <- Data_2_new %>% mutate(Autoritarisme_moyenne = rowMeans(select(., accalaw_recoded_2, loylead_recoded, lrnobed_recoded), na.rm = TRUE))
+
+
+
+# People-centrisme
+
+
+Data_2_new <- Data_2_new %>% mutate(PeopleCentrisme_moyenne = rowMeans(select(., votedir_recoded, wpestop_recoded, viepol_recoded), na.rm = TRUE))
+
+
+
+# Anti-élitisme 
+
+Data_2_new <- Data_2_new %>%
+  mutate(trstplt_recoded_2 = (trstplt_recoded - 0) / (10 - 0) * (5 - 1) + 1)
+
+Data_2_new <- Data_2_new %>% mutate(AntiElitisme_moyenne = rowMeans(select(., psppsgva_recoded, psppipla_recoded, trstplt_recoded_2), na.rm = TRUE))
+
+
+# Populisme
+
+Data_2_new <- Data_2_new %>%
+  mutate(Populisme_Indice = rowMeans(
+    cbind(PeopleCentrisme_moyenne, AntiElitisme_moyenne),
+    na.rm = TRUE
+  ))
+
+```
+
+## Mettre les indices sur la meme echelle de 0 à 1
+
+```{r}
+
+Data_2_new <- Data_2_new %>%
+  mutate(
+    Nativisme_moyenne = Nativisme_moyenne / 10
+  )
+
+
+Data_2_new <- Data_2_new %>%
+  mutate(
+    Autoritarisme_moyenne = (Autoritarisme_moyenne - 1) / 4
+  )
+
+
+Data_2_new <- Data_2_new %>%
+  mutate(
+    Populisme_Indice = (Populisme_Indice - 0.5) / (10 - 0.5)
+  )
+
+
+Data_2_new <- Data_2_new %>%
+  mutate(
+    euftf_recoded = euftf_recoded / 10
+  )
+
+
+summary(Data_2_new$Nativisme_moyenne)
+
+summary(Data_2_new$Autoritarisme_moyenne)
+
+summary(Data_2_new$Populisme_Indice)
+
+summary(Data_2_new$euftf_recoded)
+```
+
+# CRÉER UNE BASE DE DONNÉES AVEC QUE LES JEUNES, UNE BASE DE DONNÉES AVEC QUE LES PAYS DE L'EST, UNE BASE DE DONNÉES AVEC QUE LES PAYS DE L'OUEST
+
+```{r}
+
+# D'abord, ne garder que les pays intéressants 
+
+
+Data_2_new <- Data_2_new %>% filter (cntry %in% c("CZ", "EE", "HU", "PL", "SI", "SK", "BG", "FR", "DE", "IT", "AT", "ES", "BE", "PT", "CH", "SE", "NL"))
+
+# Ne garder que les jeunes
+
+
+Data_Jeunes <- Data_2_new %>% filter (Jeunes == 1)
+
+
+# Créer des bases de données que avec les pays de l'Ouest ou de l'Est
+
+Data_Est <- Data_2_new %>% filter(cntry %in% c("CZ", "EE", "HU", "PL", "SI", "SK", "BG"))
+
+
+Data_Ouest <- Data_2_new %>% filter(cntry %in% c( "FR", "DE", "IT", "AT", "ES", "BE", "PT", "CH", "SE", "NL"))
+
+
+# Créer des bases de données que avec les JEUNES des pays de l'Ouest ou de l'Est
+
+
+Data_Est_Jeunes <- Data_Jeunes %>% filter(cntry %in% c("CZ", "EE", "HU", "PL", "SI", "SK", "BG"))
+
+
+Data_Ouest_Jeunes <- Data_Jeunes %>% filter(cntry %in% c( "FR", "DE", "IT", "AT", "ES", "BE", "PT", "CH", "SE", "NL"))
+
+
+
+```
+
+# Faire les analyses
+
+## Analyses bivariées
+
+```{r}
+
+# Analyses bivariées sur les jeunes - Populisme_Indice + Nativisme_moyenne + Autoritarisme_moyenne + Conservatisme_moyenne
+
+# Avec Bollen 
+
+Model_1 <- glm(Prox_ED ~ Populisme_Indice, family = binomial(link = "logit"), data = Data_Est_Jeunes)
+
+summary(Model_1)
+
+
+Model_2 <- glm(Prox_ED ~ Populisme_Indice, family = binomial(link = "logit"), data = Data_Ouest_Jeunes)
+
+
+summary(Model_2)
+
+
+
+# Avec que Nativism
+
+
+Model_7 <- glm(Prox_ED ~ Nativisme_moyenne, family = binomial(link = "logit"), data = Data_Est_Jeunes)
+
+summary(Model_7)
+
+
+Model_8 <- glm(Prox_ED ~ Nativisme_moyenne, family = binomial(link = "logit"), data = Data_Ouest_Jeunes)
+
+
+summary(Model_8)
+
+
+# Avec que Authoritarianism
+
+
+Model_9 <- glm(Prox_ED ~ Autoritarisme_moyenne, family = binomial(link = "logit"), data = Data_Est_Jeunes)
+
+summary(Model_9)
+
+
+Model_10 <- glm(Prox_ED ~ Autoritarisme_moyenne, family = binomial(link = "logit"), data = Data_Ouest_Jeunes)
+
+
+summary(Model_10)
+
+
+
+# Avec que SocConservatism
+
+
+Model_11 <- glm(Prox_ED ~ Conservatisme_moyenne, family = binomial(link = "logit"), data = Data_Est_Jeunes)
+
+summary(Model_11)
+
+
+Model_12 <- glm(Prox_ED ~ Conservatisme_moyenne, family = binomial(link = "logit"), data = Data_Ouest_Jeunes)
+
+
+summary(Model_12)
+
+
+
+# Avec que euftf_recoded (euroscepticisme)
+
+
+Model_15 <- glm(Prox_ED ~ euftf_recoded, family = binomial(link = "logit"), data = Data_Est_Jeunes)
+
+summary(Model_15)
+
+
+Model_16 <- glm(Prox_ED ~ euftf_recoded, family = binomial(link = "logit"), data = Data_Ouest_Jeunes)
+
+
+summary(Model_16)
+
+
+# Avec que les variables de contrôle
+
+# 1) genre
+
+Model_gend <- glm(Prox_ED ~ gender, family = binomial(link = "logit"), data = Data_Est_Jeunes)
+
+summary(Model_gend)
+
+
+Model_gend <- glm(Prox_ED ~ gender, family = binomial(link = "logit"), data = Data_Ouest_Jeunes)
+
+
+summary(Model_gend)
+
+
+# 2) Niveau education 
+
+
+Model_ed <- glm(Prox_ED ~ Niv_education, family = binomial(link = "logit"), data = Data_Est_Jeunes)
+
+summary(Model_ed)
+
+
+Model_ed <- glm(Prox_ED ~ Niv_education, family = binomial(link = "logit"), data = Data_Ouest_Jeunes)
+
+
+summary(Model_ed)
+
+
+# 3) Revenu
+
+
+Model_rev <- glm(Prox_ED ~ Revenu_conf, family = binomial(link = "logit"), data = Data_Est_Jeunes)
+
+summary(Model_rev)
+
+
+Model_rev <- glm(Prox_ED ~ Revenu_conf, family = binomial(link = "logit"), data = Data_Ouest_Jeunes)
+
+
+summary(Model_rev)
+
+
+
+
+
+
+```
+
+```{r}
+# Avec que gincdif_recoded (redistribution economique)
+
+
+Model_13 <- glm(Prox_ED ~ gincdif_recoded, family = binomial(link = "logit"), data = Data_Est_Jeunes)
+
+summary(Model_13)
+
+
+Model_14 <- glm(Prox_ED ~ gincdif_recoded, family = binomial(link = "logit"), data = Data_Ouest_Jeunes)
+
+
+summary(Model_14)
+```
+
+## Analyses multivariées
+
+```{r}
+
+# Analyses multivariées chez les jeunes 
+
+
+Model_17 <- glm(Prox_ED ~  gender + Niv_education + Revenu + bollen + Nativism_lat + Authoritarianism_lat + SocConservatism_lat + euftf_recoded + gincdif_recoded + cntry, family = binomial(link = "logit"), data = Data_Est_Jeunes)
+
+summary(Model_17)
+
+modelsummary(Model_17,
+             output = "html",
+             stars = TRUE,
+             title = "Résultats du troisième modèle de régression", 
+             coef_rename = c(
+  "gender" = "Genre",
+  "Niv_education" = "Niveau d'éducation",
+  "bollen" = "Populisme",
+  "euftf_recoded" = "Euroscepticisme",
+  "gincdif_recoded " = "Redistribution",
+  "SocConservatism_lat" = "Conservatisme Social",
+  "Authoritarianism_lat" = "Authoritarisme",
+  "Nativism_lat" = "Nativisme")
+  
+  )
+
+Model_18 <- glm(Prox_ED ~ gender + Niv_education + Revenu + bollen + Nativism_lat + Authoritarianism_lat + SocConservatism_lat + euftf_recoded + gincdif_recoded + cntry, family = binomial(link = "logit"), data = Data_Ouest_Jeunes)
+
+
+summary(Model_18)
+
+modelsummary(Model_18,
+             output = "html",
+             stars = TRUE,
+             title = "Résultats du troisième modèle de régression", 
+             coef_rename = c(
+  "gender" = "Genre",
+  "Niv_education" = "Niveau d'éducation",
+  "bollen" = "Populisme",
+  "euftf_recoded" = "Euroscepticisme",
+  "gincdif_recoded " = "Redistribution",
+  "SocConservatism_lat" = "Conservatisme Social",
+  "Authoritarianism_lat" = "Authoritarisme",
+  "Nativism_lat" = "Nativisme")
+  
+  )
+
+
+Model_19 <- glm(Prox_ED ~ gender + Niv_education + Revenu + Nativism_lat + AntiElitism + PeopleCentrism + Authoritarianism_lat + SocConservatism_lat + euftf_recoded + gincdif_recoded + cntry, family = binomial(link = "logit"), data = Data_Est_Jeunes)
+
+summary(Model_19)
+
+
+modelsummary(Model_19,
+             output = "html",
+             stars = TRUE,
+             title = "Résultats du troisième modèle de régression", 
+             coef_rename = c(
+  "gender" = "Genre",
+  "Niv_education" = "Niveau d'éducation",
+  "bollen" = "Populisme",
+  "euftf_recoded" = "Euroscepticisme",
+  "gincdif_recoded " = "Redistribution",
+  "SocConservatism_lat" = "Conservatisme Social",
+  "Authoritarianism_lat" = "Authoritarisme",
+  "Nativism_lat" = "Nativisme")
+  
+  )
+
+
+Model_20 <- glm(Prox_ED ~ gender + Niv_education + Revenu + AntiElitism + PeopleCentrism + Nativism_lat + Authoritarianism_lat + SocConservatism_lat + euftf_recoded + gincdif_recoded + cntry, family = binomial(link = "logit"), data = Data_Ouest_Jeunes)
+
+
+summary(Model_20)
+
+modelsummary(Model_20,
+             output = "html",
+             stars = TRUE,
+             title = "Résultats du troisième modèle de régression", 
+             coef_rename = c(
+  "gender" = "Genre",
+  "Niv_education" = "Niveau d'éducation",
+  "bollen" = "Populisme",
+  "euftf_recoded" = "Euroscepticisme",
+  "gincdif_recoded " = "Redistribution",
+  "SocConservatism_lat" = "Conservatisme Social",
+  "Authoritarianism_lat" = "Authoritarisme",
+  "Nativism_lat" = "Nativisme")
+  
+  )
+
+
+
+# Avec effet d'intercation entre nativisme et peoplecentrism et antielitism
+
+Model_21 <- glm(Prox_ED ~ gender + Niv_education + Revenu + Nativism_lat + AntiElitism + PeopleCentrism + Authoritarianism_lat + SocConservatism_lat + euftf_recoded + gincdif_recoded + Nativism_lat * PeopleCentrism  + Nativism_lat * AntiElitism  , family = binomial(link = "logit"), data = Data_Est_Jeunes)
+
+summary(Model_21)
+
+
+Model_22 <- glm(Prox_ED ~ gender + Niv_education + Revenu + AntiElitism + PeopleCentrism + Nativism_lat + Authoritarianism_lat + SocConservatism_lat + euftf_recoded + gincdif_recoded + Nativism_lat * PeopleCentrism +  Nativism_lat * AntiElitism , family = binomial(link = "logit"), data = Data_Ouest_Jeunes)
+
+
+summary(Model_22)
+
+
+# Avec effet d'interaction entre bollen et nativisme 
+
+
+Model_23 <- glm(Prox_ED ~ gender + Niv_education + Revenu + Nativism_lat + bollen + Authoritarianism_lat + SocConservatism_lat + euftf_recoded + gincdif_recoded + Nativism_lat * bollen, family = binomial(link = "logit"), data = Data_Est_Jeunes)
+
+summary(Model_23)
+
+
+Model_24 <- glm(Prox_ED ~ gender + Niv_education + Revenu + bollen + Nativism_lat + Authoritarianism_lat + SocConservatism_lat + euftf_recoded + gincdif_recoded + Nativism_lat * bollen , family = binomial(link = "logit"), data = Data_Ouest_Jeunes)
+
+
+summary(Model_24)
+
+
+
+```
+
+## Analyses avec effet d'Intéraction pour les régions
+
+```{r}
+
+Model_régions <- glm(Prox_ED ~ gender + Niv_education + Revenu + bollen + Nativism_lat + Authoritarianism_lat + SocConservatism_lat + euftf_recoded + gincdif_recoded + gender * Region + Niv_education * Region + Revenu * Region + bollen * Region + Nativism_lat * Region + Authoritarianism_lat * Region + SocConservatism_lat * Region + euftf_recoded * Region + gincdif_recoded * Region, family = binomial(link = "logit"), data = Data_Jeunes)
+
+
+summary(Model_régions)
+
+
+# Mettre les résultats sous forme de tableau de regression
+
+tab_model(
+  Model_régions,
+  transform = "exp"
+)
+
+stargazer(
+  Model_régions,
+  type = "text"
+)
+
+modelsummary(Model_régions,
+             output = "html",
+             stars = TRUE,
+             title = "Résultats du troisième modèle de régression", 
+             coef_rename = c(
+  "gender" = "Genre",
+  "Niv_education" = "Niveau d'éducation",
+  "bollen" = "Populisme",
+  "RegionOuest" = "Ouest",
+  "euftf_recoded" = "Euroscepticisme",
+  "gincdif_recoded " = "Redistribution",
+  "SocConservatism_lat" = "Conservatisme Social",
+  "Authoritarianism_lat" = "Authoritarisme",
+  "Nativism_lat" = "Nativisme")
+  
+  )
+```
+
+## Analyses avec les indices en moyennes
+
+```{r}
+
+Model_Est <- glm(Prox_ED ~  gender + Niv_education + Revenu_conf  + Milieu_rural_urbain + Populisme_Indice + Nativisme_moyenne + Autoritarisme_moyenne + euftf_recoded, family = binomial(link = "logit"), data = Data_Est_Jeunes)
+
+summary(Model_Est)
+
+Model_Ouest <- glm(Prox_ED ~  gender + Niv_education + Revenu_conf + Milieu_rural_urbain + Populisme_Indice + Nativisme_moyenne + Autoritarisme_moyenne + euftf_recoded, family = binomial(link = "logit"), data = Data_Ouest_Jeunes)
+
+summary(Model_Ouest)
+
+Model_régions <- glm(Prox_ED ~ gender + Niv_education + Revenu_conf + Milieu_rural_urbain +  Populisme_Indice + Nativisme_moyenne + Autoritarisme_moyenne + euftf_recoded + gender * Region + Niv_education * Region + Revenu_conf * Region + Milieu_rural_urbain * Region + Populisme_Indice * Region + Nativisme_moyenne * Region + Autoritarisme_moyenne * Region  + euftf_recoded * Region, family = binomial(link = "logit"), data = Data_Jeunes)
+
+summary(Model_régions)
+
+
+
+tab_est <- tidy(Model_Est) %>%
+  mutate(
+    term = recode(term,
+                  "gender" = "Genre",
+                  "Niv_education" = "Niveau d'éducation",
+                  "Revenu_conf" = "Suffisance du revenu",
+                  "Milieu_rural_urbain" = "Milieu de vie",
+                  "Populisme_Indice" = "Populisme",
+                  "Nativisme_moyenne" = "Nativisme",
+                  "Autoritarisme_moyenne" = "Autoritarisme",
+                  "euftf_recoded" = "Euroscepticisme"
+    ),
+    
+    `Pr(>|z|)` = case_when(
+      p.value < 0.001 ~ paste0(sprintf("%.3f", p.value), " ***"),
+      p.value < 0.01  ~ paste0(sprintf("%.3f", p.value), " **"),
+      p.value < 0.05  ~ paste0(sprintf("%.3f", p.value), " *"),
+      p.value < 0.10  ~ paste0(sprintf("%.3f", p.value), " ."),
+      TRUE ~ sprintf("%.3f", p.value)
+    )
+  ) %>%
+  select(term, estimate, std.error, statistic, `Pr(>|z|)`)
+
+kable(
+  tab_est,
+  digits = 3,
+  col.names = c("Variable", "Estimate", "Std. Error", "z value", "p-value"),
+  caption = "Régression logistique – Europe de l'Est"
+) %>%
+  kable_styling(full_width = FALSE)
+
+
+
+
+tab_ouest <- tidy(Model_Ouest) %>%
+  mutate(
+    term = recode(term,
+                  "gender" = "Genre",
+                  "Niv_education" = "Niveau d'éducation",
+                  "Revenu_conf" = "Suffisance du revenu",
+                  "Milieu_rural_urbain" = "Milieu de vie",
+                  "Populisme_Indice" = "Populisme",
+                  "Nativisme_moyenne" = "Nativisme",
+                  "Autoritarisme_moyenne" = "Autoritarisme",
+                  "euftf_recoded" = "Euroscepticisme"
+    ),
+    
+    `Pr(>|z|)` = case_when(
+      p.value < 0.001 ~ paste0(sprintf("%.3f", p.value), " ***"),
+      p.value < 0.01  ~ paste0(sprintf("%.3f", p.value), " **"),
+      p.value < 0.05  ~ paste0(sprintf("%.3f", p.value), " *"),
+      p.value < 0.10  ~ paste0(sprintf("%.3f", p.value), " ."),
+      TRUE ~ sprintf("%.3f", p.value)
+    )
+  ) %>%
+  select(term, estimate, std.error, statistic, `Pr(>|z|)`)
+
+kable(
+  tab_ouest,
+  digits = 3,
+  col.names = c("Variable", "Estimate", "Std. Error", "z value", "p-value"),
+  caption = "Régression logistique – Europe de l'Ouest"
+) %>%
+  kable_styling(full_width = FALSE)
+
+
+save_kable(tab_ouest, "Tableau_Ouest.jpg")
+
+
+
+tab_regions <- tidy(Model_régions) %>%
+  mutate(
+    term = recode(term,
+                  "gender" = "Genre",
+                  "Niv_education" = "Niveau d'éducation",
+                  "Revenu_conf" = "Suffisance du revenu",
+                  "Milieu_rural_urbain" = "Milieu de vie",
+                  "Populisme_Indice" = "Populisme",
+                  "Nativisme_moyenne" = "Nativisme",
+                  "Autoritarisme_moyenne" = "Autoritarisme",
+                  "euftf_recoded" = "Euroscepticisme",
+                  "RegionOuest" = "Région Ouest",
+                  "gender:RegionOuest" = "Genre x Région Ouest",
+                  "Niv_education:RegionOuest" = "Niveau d'éducation x Région Ouest" ,
+                  "Revenu_conf:RegionOuest" = "Suffisance revenu x Région Ouest" ,
+                  "Milieu_rural_urbain:RegionOuest"= "Milieu de vie x Région Ouest",
+                  "Populisme_Indice:RegionOuest" = "Populisme x Région Ouest",
+                  "Nativisme_moyenne:RegionOuest" = "Nativisme x Région Ouest",
+                  "Autoritarisme_moyenne:RegionOuest" = "Autoritarisme x Région Ouest",
+                  "euftf_recoded:RegionOuest" = "Euroscepticisme x Région Ouest"
+                  
+                  
+    ),
+    
+    `p-value` = case_when(
+      p.value < 0.001 ~ paste0(sprintf("%.3f", p.value), " ***"),
+      p.value < 0.01  ~ paste0(sprintf("%.3f", p.value), " **"),
+      p.value < 0.05  ~ paste0(sprintf("%.3f", p.value), " *"),
+      p.value < 0.10  ~ paste0(sprintf("%.3f", p.value), " ."),
+      TRUE ~ sprintf("%.3f", p.value)
+    )
+  ) %>%
+  select(term, estimate, std.error, statistic, `p-value`)
+
+
+kable(
+  tab_regions,
+  digits = 3,
+  col.names = c("Variable", "Estimate", "Std. Error", "z value", "p-value"),
+  caption = "Régression logistique – Effets des régions",
+  escape = FALSE
+) %>%
+  kable_styling(full_width = FALSE)
+
+
+```
+
+## TABLEAUX DE RÉGRESSION
+
+```{r}
+
+library(gt)
+
+
+tableau_est <- modelsummary(
+  Model_Est,
+  
+  title = "Tableau – Régression logistique sur les pays de l'Est",
+  
+  coef_rename = c(
+    "genderHomme" = "Genre masculin",
+    "Niv_educationIntermédiaire" = "Niveau d'éducation - intermédiaire",
+    "Niv_educationÉlevé" = "Niveau d'éducation - élevé",
+    "Revenu_confDifficile de vivre confortablement" = "Revenu - Difficile de vivre confortablement",
+    "Revenu_confCapacité à s’en sortir" = "Revenu - Capacité à s’en sortir",
+    "Revenu_confSuffisant pour vivre confortablement" = "Revenu - Suffisant pour vivre confortablement",
+    "Milieu_rural_urbainZone rurale" = "Milieu rural",
+    "Populisme_Indice" = "Attitudes populistes",
+    "Nativisme_moyenne" = "Attitudes nativistes",
+    "Autoritarisme_moyenne" = "Attitudes autoritaires",
+    "euftf_recoded" = "Attitudes eurosceptiques"
+  ),
+  
+  stars = c(
+    "Note : *" = 0.1,
+    "**" = 0.05,
+    "***" = 0.01
+  ),
+  
+  statistic = "({std.error})",
+  
+  gof_map = c(
+    "nobs",
+    "logLik",
+    "AIC"
+  ),
+  
+  notes = "Source : European Social Survey (dixième vague).",
+  
+  output = "gt"
+)
+
+gtsave(
+  tableau_est,
+  "tableau_est.png"
+)
+
+
+
+
+
+tableau_est
+
+
+tableau_ouest <- modelsummary(
+  Model_Ouest,
+  
+  title = "Tableau – Régression logistique sur les pays de l'Ouest",
+  
+  coef_rename = c(
+    "genderHomme" = "Genre masculin",
+    "Niv_educationIntermédiaire" = "Niveau d'éducation - intermédiaire",
+    "Niv_educationÉlevé" = "Niveau d'éducation - élevé",
+    "Revenu_confDifficile de vivre confortablement" = "Revenu - Difficile de vivre confortablement",
+    "Revenu_confCapacité à s’en sortir" = "Revenu - Capacité à s’en sortir",
+    "Revenu_confSuffisant pour vivre confortablement" = "Revenu - Suffisant pour vivre confortablement",
+    "Milieu_rural_urbainZone rurale" = "Milieu rural",
+    "Populisme_Indice" = "Attitudes populistes",
+    "Nativisme_moyenne" = "Attitudes nativistes",
+    "Autoritarisme_moyenne" = "Attitudes autoritaires",
+    "euftf_recoded" = "Attitudes eurosceptiques"
+  ),
+  
+  stars = c(
+    "Note : *" = 0.1,
+    "**" = 0.05,
+    "***" = 0.01
+  ),
+  
+  statistic = "({std.error})",
+  
+  gof_map = c(
+    "nobs",
+    "logLik",
+    "AIC"
+  ),
+  
+  notes = "Source : European Social Survey (dixième vague).",
+  
+  output = "gt"
+)
+
+gtsave(
+  tableau_ouest,
+  "tableau_ouest.png"
+)
+
+
+tableau_ouest
+
+
+
+tableau_regions <- modelsummary(
+  Model_régions,
+  
+  title = "Tableau – Régression logistique avec effet d'interaction par région",
+  
+  coef_rename = c(
+    "genderHomme" = "Genre masculin",
+    "Niv_educationIntermédiaire" = "Niveau d'éducation - intermédiaire",
+    "Niv_educationÉlevé" = "Niveau d'éducation - élevé",
+    
+    "Revenu_confDifficile de vivre confortablement" =
+      "Revenu - Difficile de vivre confortablement",
+    
+    "Revenu_confCapacité à s’en sortir" =
+      "Revenu - Capacité à s’en sortir",
+    
+    "Revenu_confSuffisant pour vivre confortablement" =
+      "Revenu - Suffisant pour vivre confortablement",
+    
+    "Milieu_rural_urbainZone rurale" = "Milieu rural",
+    "Populisme_Indice" = "Attitudes populistes",
+    "Nativisme_moyenne" = "Attitudes nativistes",
+    "Autoritarisme_moyenne" = "Attitudes autoritaires",
+    "euftf_recoded" = "Attitudes eurosceptiques",
+    
+    "RegionOuest" = "Région de l'Ouest",
+    
+    "genderHomme:RegionOuest" =
+      "Genre masculin × Région de l'Ouest",
+    
+    "Niv_educationIntermédiaire:RegionOuest" =
+      "Niveau d'éducation - intermédiaire × Région de l'Ouest",
+    
+    "Niv_educationÉlevé:RegionOuest" =
+      "Niveau d'éducation - élevé × Région de l'Ouest",
+    
+    "Revenu_confDifficile de vivre confortablement:RegionOuest" =
+      "Revenu - difficile × Région de l'Ouest",
+    
+    "Revenu_confCapacité à s’en sortir:RegionOuest" =
+      "Revenu - capacité à s’en sortir × Région de l'Ouest",
+    
+    "Revenu_confSuffisant pour vivre confortablement:RegionOuest" =
+      "Revenu - confortable × Région de l'Ouest",
+    
+    "Milieu_rural_urbainZone rurale:RegionOuest" =
+      "Milieu rural × Région de l'Ouest",
+    
+    "Populisme_Indice:RegionOuest" =
+      "Attitudes populistes × Région de l'Ouest",
+    
+    "Nativisme_moyenne:RegionOuest" =
+      "Attitudes nativistes × Région de l'Ouest",
+    
+    "Autoritarisme_moyenne:RegionOuest" =
+      "Attitudes autoritaires × Région de l'Ouest",
+    
+    "euftf_recoded:RegionOuest" =
+      "Attitudes eurosceptiques × Région de l'Ouest"
+  ),
+  
+  stars = c(
+    "Note : *" = 0.1,
+    "**" = 0.05,
+    "***" = 0.01
+  ),
+  
+  statistic = "({std.error})",
+  
+  gof_map = c(
+    "nobs",
+    "logLik",
+    "AIC"
+  ),
+  
+  notes = "Source : European Social Survey (dixième vague).",
+  
+  output = "gt"
+)
+
+tableau_regions
+
+gtsave(
+  tableau_regions,
+  "tableau_regions.png"
+)
+
+```
+
+## CALCULER LES PROBABILITÉS PRÉDITES
+
+```{r}
+
+
+### Pour le populisme
+
+## Ouest
+
+pred_pop_Ouest <- predictions(
+  Model_Ouest,
+  newdata = datagrid(
+    Populisme_Indice = seq(
+      min(Data_Ouest_Jeunes$Populisme_Indice, na.rm = TRUE),
+      max(Data_Ouest_Jeunes$Populisme_Indice, na.rm = TRUE),
+      length.out = 100
+    ),
+    grid_type = "mean_or_mode"
+  ),
+  type = "response"
+)
+
+
+ggplot(pred_pop_Ouest,
+       aes(x = Populisme_Indice,
+           y = estimate)) +
+  geom_line(size = 1) +
+  geom_ribbon(aes(ymin = conf.low,
+                  ymax = conf.high),
+              alpha = .20,
+              fill = "turquoise3") + 
+  scale_y_continuous(labels = scales :: label_percent (accuracy = 1)) +
+  labs(
+    x = "Attitudes populistes",
+    y = "Probabilité prédite de proximité avec un PEDP"
+  ) +
+  theme_classic()
+
+
+
+
+
+## Est 
+
+pred_pop_Est <- predictions(
+  Model_Est,
+  newdata = datagrid(
+    Populisme_Indice = seq(
+      min(Data_Est_Jeunes$Populisme_Indice, na.rm = TRUE),
+      max(Data_Est_Jeunes$Populisme_Indice, na.rm = TRUE),
+      length.out = 100
+    ),
+    
+    grid_type = "mean_or_mode"
+    
+  ),
+    
+    type = "response"
+)
+
+
+
+ggplot(pred_pop_Est,
+       aes(x = Populisme_Indice,
+           y = estimate)) +
+  geom_line(size = 1) +
+  geom_ribbon(aes(ymin = conf.low,
+                  ymax = conf.high),
+              alpha = .20,
+              fill = "violetred2") + 
+  scale_y_continuous(labels = scales :: label_percent (accuracy = 1)) +
+  labs(
+    x = "Attitudes populistes",
+    y = "Probabilité prédite de proximité avec un PEDP"
+  ) +
+  theme_classic()
+
+
+
+## Region
+
+
+pred_pop_Region <- predictions(
+  Model_régions,
+  newdata = datagrid(
+    Populisme_Indice = seq(
+      min(Data_Jeunes$Populisme_Indice, na.rm = TRUE),
+      max(Data_Jeunes$Populisme_Indice, na.rm = TRUE),
+      length.out = 100
+    ),
+    Region = unique(Data_Jeunes$Region),
+    grid_type = "mean_or_mode"
+  ),
+  type = "response"
+)
+
+
+ggplot(pred_pop_Region,
+       aes(
+         x = Populisme_Indice,
+         y = estimate,
+         colour = Region,
+         fill = Region
+       )) +
+  geom_line(size = 1.2) +
+  geom_ribbon(
+    aes(ymin = conf.low,
+        ymax = conf.high),
+    alpha = .15,
+    colour = NA
+  ) + scale_y_continuous(labels = scales :: label_percent (accuracy = 1)) +
+  labs(
+    x = "Attitudes populistes",
+    y = "Probabilité prédite de proximité avec un PEDP",
+    colour = "Région",
+    fill = "Région"
+  ) +
+  theme_classic()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Pour le nativisme 
+
+
+
+## Ouest
+
+pred_nat_Ouest <- predictions(
+  Model_Ouest,
+  newdata = datagrid(
+    Nativisme_moyenne = seq(
+      min(Data_Ouest_Jeunes$Nativisme_moyenne, na.rm = TRUE),
+      max(Data_Ouest_Jeunes$Nativisme_moyenne, na.rm = TRUE),
+      length.out = 100
+    ),
+    
+    grid_type = "mean_or_mode"
+    
+  ),
+  
+  type = "response"
+)
+
+
+ggplot(pred_nat_Ouest,
+       aes(x = Nativisme_moyenne,
+           y = estimate)) +
+  geom_line(size = 1) +
+  geom_ribbon(aes(ymin = conf.low,
+                  ymax = conf.high),
+              alpha = .20,
+              fill = "turquoise3") +
+  scale_y_continuous(labels = scales :: label_percent (accuracy = 1)) +
+  labs(
+    x = "Attitudes nativistes",
+    y = "Probabilité prédite de proximité avec un PEDP"
+  ) +
+  theme_classic()
+
+
+
+
+
+## Est 
+
+pred_nat_Est <- predictions(
+  Model_Est,
+  newdata = datagrid(
+    Nativisme_moyenne = seq(
+      min(Data_Est_Jeunes$Nativisme_moyenne, na.rm = TRUE),
+      max(Data_Est_Jeunes$Nativisme_moyenne, na.rm = TRUE),
+      length.out = 100
+    ),
+    
+    grid_type = "mean_or_mode"
+  ),
+  
+  type = "response"
+)
+
+
+ggplot(pred_nat_Est,
+       aes(x = Nativisme_moyenne,
+           y = estimate)) +
+  geom_line(size = 1) +
+  geom_ribbon(aes(ymin = conf.low,
+                  ymax = conf.high),
+              alpha = .20,
+              fill = "violetred2") + 
+  scale_y_continuous(labels = scales :: label_percent (accuracy = 1)) +
+  labs(
+    x = "Attitudes nativistes",
+    y = "Probabilité prédite de proximité avec un PEDP"
+  ) +
+  theme_classic()
+
+
+
+
+
+## Region 
+
+pred_nat_Region <- predictions(
+  Model_régions,
+  newdata = datagrid(
+    Nativisme_moyenne = seq(
+      min(Data_Jeunes$Nativisme_moyenne, na.rm = TRUE),
+      max(Data_Jeunes$Nativisme_moyenne, na.rm = TRUE),
+      length.out = 100
+    ),
+    Region = unique(Data_Jeunes$Region),
+    grid_type = "mean_or_mode"
+  ),
+  
+  type = "response"
+)
+
+
+ggplot(pred_nat_Region,
+       aes(
+         x = Nativisme_moyenne,
+         y = estimate,
+         colour = Region,
+         fill = Region
+       )) +
+  geom_line(size = 1.2) +
+  geom_ribbon(
+    aes(ymin = conf.low,
+        ymax = conf.high),
+    alpha = .15,
+    colour = NA
+  ) + 
+  scale_y_continuous(labels = scales :: label_percent (accuracy = 1)) +
+  labs(
+    x = "Attitudes nativistes",
+    y = "Probabilité prédite de proximité avec un PEDP",
+    colour = "Région",
+    fill = "Région"
+  ) +
+  theme_classic()
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Pour l'autoritarisme 
+
+
+## Ouest 
+
+
+pred_aut_Ouest <- predictions(
+  Model_Ouest,
+  newdata = datagrid(
+    Autoritarisme_moyenne = seq(
+      min(Data_Ouest_Jeunes$Autoritarisme_moyenne, na.rm = TRUE),
+      max(Data_Ouest_Jeunes$Autoritarisme_moyenne, na.rm = TRUE),
+      length.out = 100
+    ),
+    grid_type = "mean_or_mode"
+    
+  ),
+  
+  type = "response"
+)
+
+
+ggplot(pred_aut_Ouest,
+       aes(x = Autoritarisme_moyenne,
+           y = estimate)) +
+  geom_line(size = 1) +
+  geom_ribbon(aes(ymin = conf.low,
+                  ymax = conf.high),
+              alpha = .20,
+              fill = "turquoise3") +
+  scale_y_continuous(labels = scales :: label_percent (accuracy = 1)) +
+  labs(
+    x = "Attitudes autoritaires",
+    y = "Probabilité prédite de proximité avec un PEDP"
+  ) +
+  theme_classic()
+
+
+
+
+
+
+## Est
+
+
+pred_aut_Est <- predictions(
+  Model_Est,
+  newdata = datagrid(
+    Autoritarisme_moyenne = seq(
+      min(Data_Est_Jeunes$Autoritarisme_moyenne, na.rm = TRUE),
+      max(Data_Est_Jeunes$Autoritarisme_moyenne, na.rm = TRUE),
+      length.out = 100
+    ),
+    
+    grid_type = "mean_or_mode"
+  ),
+  
+  type = "response"
+)
+
+
+ggplot(pred_aut_Est,
+       aes(x = Autoritarisme_moyenne,
+           y = estimate)) +
+  geom_line(size = 1) +
+  geom_ribbon(aes(ymin = conf.low,
+                  ymax = conf.high),
+              alpha = .20,
+              fill = "violetred2") +
+  scale_y_continuous(labels = scales :: label_percent (accuracy = 1)) +
+  labs(
+    x = "Attitudes autoritaires",
+    y = "Probabilité prédite de proximité avec un PEDP"
+  ) +
+  theme_classic()
+
+
+
+
+## Region 
+
+
+pred_aut_Region <- predictions(
+  Model_régions,
+  newdata = datagrid(
+    Autoritarisme_moyenne = seq(
+      min(Data_Jeunes$Autoritarisme_moyenne, na.rm = TRUE),
+      max(Data_Jeunes$Autoritarisme_moyenne, na.rm = TRUE),
+      length.out = 100
+    ),
+    
+    Region = unique(Data_Jeunes$Region),
+    grid_type = "mean_or_mode"
+  ),
+  
+  type = "response"
+)
+
+
+ggplot(pred_aut_Region,
+       aes(
+         x = Autoritarisme_moyenne,
+         y = estimate,
+         colour = Region,
+         fill = Region
+       )) +
+  geom_line(size = 1.2) +
+  geom_ribbon(
+    aes(ymin = conf.low,
+        ymax = conf.high),
+    alpha = .15,
+    colour = NA
+  ) +
+  scale_y_continuous(labels = scales :: label_percent (accuracy = 1)) +
+  labs(
+    x = "Attitudes autoritaires",
+    y = "Probabilité prédite de proximité avec un PEDP",
+    colour = "Région",
+    fill = "Région"
+  ) +
+  theme_classic()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Pour l'Euroscepticisme
+
+
+
+## Ouest
+
+pred_eur_Ouest <- predictions(
+  Model_Ouest,
+  newdata = datagrid(
+    euftf_recoded = seq(
+      min(Data_Ouest_Jeunes$euftf_recoded, na.rm = TRUE),
+      max(Data_Ouest_Jeunes$euftf_recoded, na.rm = TRUE),
+      length.out = 100
+    ),
+    
+    grid_type = "mean_or_mode"
+    
+  ),
+  type = "response"
+)
+
+
+
+ggplot(pred_eur_Ouest,
+       aes(x = euftf_recoded,
+           y = estimate)) +
+  geom_line(size = 1) +
+  geom_ribbon(aes(ymin = conf.low,
+                  ymax = conf.high),
+              alpha = .20,
+              fill = "turquoise3") + 
+  scale_y_continuous(labels = scales :: label_percent (accuracy = 1)) +
+  labs(
+    x = "Attitudes eurosceptiques",
+    y = "Probabilité prédite de proximité avec un PEDP"
+  ) +
+  theme_classic()
+
+
+
+
+
+
+## Est
+
+
+pred_eur_Est <- predictions(
+  Model_Est,
+  newdata = datagrid(
+    euftf_recoded = seq(
+      min(Data_Est_Jeunes$euftf_recoded, na.rm = TRUE),
+      max(Data_Est_Jeunes$euftf_recoded, na.rm = TRUE),
+      length.out = 100
+    ),
+    
+    grid_type = "mean_or_mode"
+    
+  ),
+  
+  type = "response"
+)
+
+
+
+ggplot(pred_eur_Est,
+       aes(x = euftf_recoded,
+           y = estimate)) +
+  geom_line(size = 1) +
+  geom_ribbon(aes(ymin = conf.low,
+                  ymax = conf.high),
+              alpha = .20,
+              fill = "violetred2") + 
+  scale_y_continuous(labels = scales :: label_percent (accuracy = 1)) +
+  labs(
+    x = "Attitudes eurosceptiques",
+    y = "Probabilité prédite de proximité avec un PEDP"
+  ) +
+  theme_classic()
+
+
+
+
+
+## Region
+
+
+pred_eur_Region <- predictions(
+  Model_régions,
+  newdata = datagrid(
+    euftf_recoded = seq(
+      min(Data_Jeunes$euftf_recoded, na.rm = TRUE),
+      max(Data_Jeunes$euftf_recoded, na.rm = TRUE),
+      length.out = 100
+    ),
+    
+    Region = unique(Data_Jeunes$Region),
+    grid_type = "mean_or_mode"
+  ),
+  type = "response"
+)
+
+
+
+
+ggplot(pred_eur_Region,
+       aes(
+         x = euftf_recoded,
+         y = estimate,
+         colour = Region,
+         fill = Region
+       )) +
+  geom_line(size = 1.2) +
+  geom_ribbon(
+    aes(ymin = conf.low,
+        ymax = conf.high),
+    alpha = .15,
+    colour = NA
+  ) +
+  scale_y_continuous(labels = scales :: label_percent (accuracy = 1)) +
+  scale_colour_manual(
+    values = c(
+      "Ouest" = "turquoise3",
+      "Est" = "violetred2"
+    )
+  ) +
+  labs(
+    x = "Attitudes eurosceptiques",
+    y = "Probabilité prédite de proximité avec un PEDP",
+    colour = "Région",
+    fill = "Région"
+  ) +
+  theme_classic()
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Genre 
+
+
+
+## Ouest
+
+
+pred_gender_Ouest <- predictions(
+  Model_Ouest,
+  newdata = datagrid(
+    gender = c(0,1)
+  )
+) %>%
+  mutate(
+    variable = "Genre",
+    catégorie = factor(
+      gender,
+      levels = c(0,1),
+      labels = c("Femme","Homme")
+    )
+  )
+
+
+
+
+
+## Est 
+
+pred_gender_Est <- predictions(
+  Model_Est,
+  newdata = datagrid(
+    gender = c(0,1)
+  )
+) %>%
+  mutate(
+    variable = "Genre",
+    catégorie = factor(
+      gender,
+      levels = c(0,1),
+      labels = c("Femme","Homme")
+    )
+  )
+
+
+
+
+
+## Region
+
+pred_gender_region <- predictions(
+  Model_régions,
+  newdata = datagrid(
+    gender = c(0,1),
+    Region = unique(Data_Jeunes$Region)
+  )
+) %>%
+  mutate(
+    variable = "Genre",
+    catégorie = factor(
+      gender,
+      levels = c(0,1),
+      labels = c("Femme","Homme")
+    )
+  )
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Education 
+
+
+
+
+## Ouest
+
+
+pred_education_Ouest <- predictions(
+  Model_Ouest,
+  newdata = datagrid(
+    Niv_education = c(1,2,3)
+  )
+) %>%
+  mutate(
+    variable = "Niveau d'éducation",
+    catégorie = factor(
+      Niv_education,
+      levels = c(1,2,3),
+      labels = c("Faible","Intermédiaire","Élevé")
+    )
+  )
+
+## Est
+
+
+pred_education_Est <- predictions(
+  Model_Est,
+  newdata = datagrid(
+    Niv_education = c(1,2,3)
+  )
+) %>% mutate(
+  variable = "Niveau d'éducation",
+  catégorie = factor(
+    Niv_education,
+    levels = c(1,2,3),
+    labels = c("Faible","Intermédiaire","Élevé")
+  )
+)
+
+
+
+
+## Region
+
+pred_education_region <- predictions(
+  Model_régions,
+  newdata = datagrid(
+    Niv_education = c(1,2,3),
+    Region = unique(Data_Jeunes$Region)
+  )
+) %>% mutate(
+  variable = "Niveau d'éducation",
+  catégorie = factor(
+    Niv_education,
+    levels = c(1,2,3),
+    labels = c("Faible","Intermédiaire","Élevé")
+  )
+)
+
+
+
+
+
+
+
+
+### Revenu
+
+
+
+
+## Ouest
+
+pred_revenu_Ouest <- predictions(
+  Model_Ouest,
+  newdata = datagrid(
+    Revenu_conf = c(1,2,3,4)
+  )
+) %>%
+  mutate(
+    variable = "Perception du revenu",
+    catégorie = factor(
+      Revenu_conf,
+      levels = c(1,2,3,4),
+      labels = c("Très difficile de vivre confortablement",
+                 "Difficile de vivre confortablement",
+                 "Capacité à s’en sortir",
+                 "Suffisant pour vivre confortablement"
+      )
+    )
+  )
+
+
+
+## Est
+
+
+pred_revenu_Est <- predictions(
+  Model_Est,
+  newdata = datagrid(
+    Revenu_conf = c(1,2,3,4)
+  )
+) %>%
+  mutate(
+    variable = "Perception du revenu",
+    catégorie = factor(
+      Revenu_conf,
+      levels = c(1,2,3,4),
+      labels = c("Très difficile de vivre confortablement",
+                 "Difficile de vivre confortablement",
+                 "Capacité à s’en sortir",
+                 "Suffisant pour vivre confortablement"
+      )
+    )
+  )
+
+
+
+
+## Region
+
+pred_revenu_region <- predictions(
+  Model_régions,
+  newdata = datagrid(
+    Revenu_conf = c(1,2,3,4),
+    Region = unique(Data_Jeunes$Region)
+  )
+) %>%
+  mutate(
+    variable = "Perception du revenu",
+    catégorie = factor(
+      Revenu_conf,
+      levels = c(1,2,3,4),
+      labels = c("Très difficile de vivre confortablement",
+                 "Difficile de vivre confortablement",
+                 "Capacité à s’en sortir",
+                 "Suffisant pour vivre confortablement"
+      )
+    )
+  )
+
+
+
+
+### Creer des graphiques avec facet_wrap pour les variables de contrôle
+
+
+pred_controles_Ouest <- bind_rows(
+  pred_gender_Ouest,
+  pred_education_Ouest,
+  pred_revenu_Ouest
+)
+
+
+
+pred_controles_Est <- bind_rows(
+  pred_gender_Est,
+  pred_education_Est,
+  pred_revenu_Est
+)
+
+
+pred_controles_region <- bind_rows(
+  pred_gender_region,
+  pred_education_region,
+  pred_revenu_region
+)
+
+
+
+
+
+ggplot(pred_controles_Ouest,
+       aes(x = catégorie,
+           y = estimate)) +
+  
+  geom_point(size = 3) +
+  
+  geom_errorbar(
+    aes(ymin = conf.low,
+        ymax = conf.high),
+    width = .1,
+    colour = "turquoise3"
+  ) +
+  
+  facet_wrap(~ variable,
+             scales = "free_x") +
+  
+  scale_y_continuous(labels = scales :: label_percent (accuracy = 1)) +
+  
+  labs(
+    x = NULL,
+    y = "Probabilité prédite de proximité avec un PEDP"
+  ) +
+  
+  theme_classic()
+
+
+
+
+
+
+ggplot(pred_controles_Est,
+       aes(x = catégorie,
+           y = estimate)) +
+  
+  geom_point(size = 3) +
+  
+  geom_errorbar(
+    aes(ymin = conf.low,
+        ymax = conf.high),
+    width = .1,
+    colour = "violetred2"
+  ) +
+  
+  facet_wrap(~ variable,
+             scales = "free_x") +
+  scale_y_continuous(labels = scales :: label_percent (accuracy = 1)) +
+  
+  labs(
+    x = NULL,
+    y = "Probabilité prédite de proximité avec un PEDP"
+  ) +
+  
+  theme_classic()
+
+
+
+
+
+ggplot(pred_controles_region,
+       aes(x = catégorie,
+           y = estimate,
+           colour = Region,
+           group = Region)) +
+  geom_point(
+    size = 3,
+    position = position_dodge(width = .3)
+  ) +
+  
+  geom_errorbar(
+    aes(ymin = conf.low,
+        ymax = conf.high),
+    width = .1,
+    position = position_dodge(width = .3)
+  ) +
+  
+  facet_wrap(~ variable,
+             scales = "free_x")  + 
+  scale_y_continuous(labels = scales :: label_percent (accuracy = 1)) +
+  
+  scale_colour_manual(
+    values = c(
+      "Ouest" = "turquoise3",
+      "Est" =  "violetred2"
+    )
+  ) + 
+  
+  labs(
+    x = NULL,
+    y = "Probabilité de se sentir proche d'un PEDP (en %)",
+    colour = "Région"
+  ) +
+  
+  theme (
+    panel.grid.major.x = element_blank(),
+    axis.text.x = element_text(angle = 45, size = 7, hjust = 1),
+panel.background = element_rect(fill = "white"),
+panel.grid.major.y = element_line(linetype = "solid", colour = "snow2"
+                                  ))
+```
+
+COMBINER LES GRAPHIQUES AVEC FACET_WRAP
+
+```{r}
+
+
+
+pred_Ouest <- bind_rows(
+  pred_pop_Ouest %>% 
+    mutate(attitude = "Attitudes populistes",
+           score = Populisme_Indice),
+  
+  pred_nat_Ouest %>% 
+    mutate(attitude = "Attitudes nativistes",
+           score = Nativisme_moyenne),
+  
+  pred_aut_Ouest %>% 
+    mutate(attitude = "Attitudes autoritaires",
+           score = Autoritarisme_moyenne),
+  
+  pred_eur_Ouest %>% 
+    mutate(attitude = "Attitudes eurosceptiques",
+           score = euftf_recoded)
+)
+
+
+
+
+pred_Ouest$attitude <- factor(pred_Ouest$attitude,
+                              levels = c("Attitudes populistes",
+                                         "Attitudes nativistes",
+                                         "Attitudes autoritaires",
+                                         "Attitudes eurosceptiques"))
+
+
+graph_Ouest_combinés <- ggplot(pred_Ouest,
+       aes(x = score,
+           y = estimate)) +
+  geom_line(size = 1) +
+  geom_ribbon(aes(ymin = conf.low,
+                  ymax = conf.high),
+              alpha = .20,
+              fill = "turquoise3") +
+  facet_wrap(~ attitude,
+             scales = "free_x") +
+  scale_y_continuous(labels = scales::label_percent(accuracy = 1)) +
+  labs(
+    x = NULL,
+    y = "Probabilité prédite de proximité avec un PEDP"
+  ) +
+  theme_classic()
+
+
+
+
+graph_Ouest_combinés
+
+
+ggsave(
+  "graph_Ouest_combinés.jpg",
+  plot = graph_Ouest_combinés,
+  width = 10,
+  height = 6,
+  dpi = 300
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+pred_Est <- bind_rows(
+  pred_pop_Est %>% 
+    mutate(attitude = "Attitudes populistes",
+           score = Populisme_Indice),
+  
+  pred_nat_Est %>% 
+    mutate(attitude = "Attitudes nativistes",
+           score = Nativisme_moyenne),
+  
+  pred_aut_Est %>% 
+    mutate(attitude = "Attitudes autoritaires",
+           score = Autoritarisme_moyenne)
+)
+
+
+
+
+pred_Est$attitude <- factor(pred_Est$attitude,
+                              levels = c("Attitudes populistes",
+                                         "Attitudes nativistes",
+                                         "Attitudes autoritaires"))
+
+
+graph_Est_combinés <- ggplot(pred_Est,
+                               aes(x = score,
+                                   y = estimate)) +
+  geom_line(size = 1) +
+  geom_ribbon(aes(ymin = conf.low,
+                  ymax = conf.high),
+              alpha = .20,
+              fill = "violetred2") +
+  facet_wrap(~ attitude,
+             scales = "free_x") +
+  scale_y_continuous(labels = scales::label_percent(accuracy = 1)) +
+  labs(
+    x = NULL,
+    y = "Probabilité prédite de proximité avec un PEDP"
+  ) +
+  theme_classic()
+
+
+
+
+graph_Est_combinés
+
+
+ggsave(
+  "graph_Est_combinés.jpg",
+  plot = graph_Est_combinés,
+  width = 10,
+  height = 6,
+  dpi = 300
+)
+
+
+
+
+pred_Region <- bind_rows(
+  
+  pred_pop_Region %>% 
+    mutate(
+      attitude = "Attitudes populistes",
+      score = Populisme_Indice
+    ),
+  
+  pred_nat_Region %>% 
+    mutate(
+      attitude = "Attitudes nativistes",
+      score = Nativisme_moyenne
+    ),
+  
+  pred_aut_Region %>% 
+    mutate(
+      attitude = "Attitudes autoritaires",
+      score = Autoritarisme_moyenne
+    ),
+  
+  pred_eur_Region %>% 
+    mutate(
+      attitude = "Attitudes eurosceptiques",
+      score = euftf_recoded
+    )
+) %>%
+  mutate(
+    attitude = factor(
+      attitude,
+      levels = c(
+        "Attitudes populistes",
+        "Attitudes nativistes",
+        "Attitudes autoritaires",
+        "Attitudes eurosceptiques"
+      )
+    )
+  )
+
+
+
+
+Graph_Combines_regions <- ggplot(
+  pred_Region,
+  aes(
+    x = score,
+    y = estimate,
+    colour = Region,
+    fill = Region
+  )
+) +
+  geom_line(size = 1.2) +
+  geom_ribbon(
+    aes(
+      ymin = conf.low,
+      ymax = conf.high
+    ),
+    alpha = .15,
+    colour = NA
+  ) +
+  facet_wrap(
+    ~ attitude,
+    ncol = 2,
+    scales = "free_x"
+  ) +
+  scale_y_continuous(
+    labels = scales::label_percent(accuracy = 1)
+  ) +
+  scale_colour_manual(
+    values = c(
+      "Ouest" = "turquoise3",
+      "Est" = "violetred2"
+    )
+  ) +
+  scale_fill_manual(
+    values = c(
+      "Ouest" = "turquoise3",
+      "Est" = "violetred2"
+    )
+  ) +
+  labs(
+    x = NULL,
+    y = "Probabilité prédite de proximité avec un PEDP",
+    colour = "Région",
+    fill = "Région"
+  ) +
+  theme_classic()
+
+Graph_Combines_regions
+
+
+ggsave(
+  "Graph_Combines_regions.jpg",
+  plot = Graph_Combines_regions,
+  width = 10,
+  height = 6,
+  dpi = 300
+)
+
+```
+
+## Analyses de robustesse en retirant hongrie, pologne où des partis d'extreme droite populistes etaient au pouvoir au moment enquete POUR VERIFIER SI L'EFFET DU POPULISME CHANGE PUISQUE ANTI-ELITISME ET PEOPLE-CENTRISME PEUT-ETRE MOINS PRONONCÉS QUAND PARTIS EXTREME DROITE POPULISTE AU GOUV.
+
+```{r}
+
+
+Data_Jeunes_2 <- Data_Jeunes %>% filter(!cntry %in% c("HU", "PL"))
+
+Data_Est_Jeunes_2 <- Data_Jeunes %>% filter(cntry %in% c("CZ", "EE", "SI", "SK", "BG"))
+
+Data_Ouest_Jeunes_2 <- Data_Jeunes %>% filter(cntry %in% c("FR", "DE", "IT", "AT", "ES", "BE", "PT", "CH", "SE", "NL"))
+
+
+Data_Jeunes_sansHU <- Data_Jeunes %>% filter(!cntry %in% c("HU"))
+
+Data_Est_Jeunes_sansHU <- Data_Jeunes %>% filter(cntry %in% c("CZ", "EE", "SI", "SK", "BG", "PL"))
+
+
+
+
+Data_Jeunes_sansPL <- Data_Jeunes %>% filter(!cntry %in% c("PL"))
+
+Data_Est_Jeunes_sansPL <- Data_Jeunes %>% filter(cntry %in% c("CZ", "EE", "SI", "SK", "BG", "HU"))
+
+
+
+Model_Est <- glm(Prox_ED ~  gender + Niv_education + Revenu + Populisme_Indice + Nativisme_moyenne + Autoritarisme_moyenne + euftf_recoded, family = binomial(link = "logit"), data = Data_Est_Jeunes_2)
+
+summary(Model_Est)
+
+Model_Ouest <- glm(Prox_ED ~  gender + Niv_education + Revenu + Populisme_Indice + Nativisme_moyenne + Autoritarisme_moyenne + euftf_recoded, family = binomial(link = "logit"), data = Data_Ouest_Jeunes_2)
+
+summary(Model_Ouest)
+
+Model_régions <- glm(Prox_ED ~ gender + Niv_education + Revenu + Populisme_Indice + Nativisme_moyenne + Autoritarisme_moyenne + euftf_recoded + gender * Region + Niv_education * Region + Revenu * Region + Populisme_Indice * Region + Nativisme_moyenne * Region + Autoritarisme_moyenne * Region + euftf_recoded * Region, family = binomial(link = "logit"), data = Data_Jeunes_2)
+
+summary(Model_régions)
+
+
+
+
+
+
+tableau_est <- modelsummary(
+  Model_Est,
+  
+  title = "Tableau – Régression logistique sur les pays de l'Est",
+  
+  coef_rename = c(
+    "genderHomme" = "Genre masculin",
+    "Niv_educationIntermédiaire" = "Niveau d'éducation - intermédiaire",
+    "Niv_educationÉlevé" = "Niveau d'éducation - élevé",
+    "Revenu_confDifficile de vivre confortablement" = "Revenu - Difficile de vivre confortablement",
+    "Revenu_confCapacité à s’en sortir" = "Revenu - Capacité à s’en sortir",
+    "Revenu_confSuffisant pour vivre confortablement" = "Revenu - Suffisant pour vivre confortablement",
+    "Milieu_rural_urbainZone rurale" = "Milieu rural",
+    "Populisme_Indice" = "Attitudes populistes",
+    "Nativisme_moyenne" = "Attitudes nativistes",
+    "Autoritarisme_moyenne" = "Attitudes autoritaires",
+    "euftf_recoded" = "Attitudes eurosceptiques"
+  ),
+  
+  stars = c(
+    "*" = 0.1,
+    "**" = 0.05,
+    "***" = 0.01
+  ),
+  
+  statistic = "({std.error})",
+  
+  gof_map = c(
+    "nobs",
+    "logLik",
+    "AIC"
+  ),
+  
+  notes = "Source : European Social Survey (dixième vague).",
+  
+  output = "gt"
+)
+
+tableau_est
+
+gtsave(
+  tableau_est,
+  "tableau_est.png"
+)
+
+
+
+
+
+
+
+
+tableau_ouest <- modelsummary(
+  Model_Ouest,
+  
+  title = "Tableau – Régression logistique sur les pays de l'Ouest",
+  
+  coef_rename = c(
+    "genderHomme" = "Genre masculin",
+    "Niv_educationIntermédiaire" = "Niveau d'éducation - intermédiaire",
+    "Niv_educationÉlevé" = "Niveau d'éducation - élevé",
+    "Revenu_confDifficile de vivre confortablement" = "Revenu - Difficile de vivre confortablement",
+    "Revenu_confCapacité à s’en sortir" = "Revenu - Capacité à s’en sortir",
+    "Revenu_confSuffisant pour vivre confortablement" = "Revenu - Suffisant pour vivre confortablement",
+    "Milieu_rural_urbainZone rurale" = "Milieu rural",
+    "Populisme_Indice" = "Attitudes populistes",
+    "Nativisme_moyenne" = "Attitudes nativistes",
+    "Autoritarisme_moyenne" = "Attitudes autoritaires",
+    "euftf_recoded" = "Attitudes eurosceptiques"
+  ),
+  
+  stars = c(
+    "*" = 0.1,
+    "**" = 0.05,
+    "***" = 0.01
+  ),
+  
+  statistic = "({std.error})",
+  
+  gof_map = c(
+    "nobs",
+    "logLik",
+    "AIC"
+  ),
+  
+  notes = "Source : European Social Survey (dixième vague).",
+  
+  output = "gt"
+)
+
+gtsave(
+  tableau_ouest,
+  "tableau_ouest.png"
+)
+
+
+
+
+
+
+tableau_regions <- modelsummary(
+  Model_régions,
+  
+  title = "Tableau – Régression logistique avec effet d'interaction par région",
+  
+  coef_rename = c(
+    "genderHomme" = "Genre masculin",
+    "Niv_educationIntermédiaire" = "Niveau d'éducation - intermédiaire",
+    "Niv_educationÉlevé" = "Niveau d'éducation - élevé",
+    
+    "Revenu_confDifficile de vivre confortablement" =
+      "Revenu - Difficile de vivre confortablement",
+    
+    "Revenu_confCapacité à s’en sortir" =
+      "Revenu - Capacité à s’en sortir",
+    
+    "Revenu_confSuffisant pour vivre confortablement" =
+      "Revenu - Suffisant pour vivre confortablement",
+    
+    "Milieu_rural_urbainZone rurale" = "Milieu rural",
+    "Populisme_Indice" = "Attitudes populistes",
+    "Nativisme_moyenne" = "Attitudes nativistes",
+    "Autoritarisme_moyenne" = "Attitudes autoritaires",
+    "euftf_recoded" = "Attitudes eurosceptiques",
+    
+    "RegionOuest" = "Région de l'Ouest",
+    
+    "genderHomme:RegionOuest" =
+      "Genre masculin × Région de l'Ouest",
+    
+    "Niv_educationIntermédiaire:RegionOuest" =
+      "Niveau d'éducation - intermédiaire × Région de l'Ouest",
+    
+    "Niv_educationÉlevé:RegionOuest" =
+      "Niveau d'éducation - élevé × Région de l'Ouest",
+    
+    "Revenu_confDifficile de vivre confortablement:RegionOuest" =
+      "Revenu - difficile × Région de l'Ouest",
+    
+    "Revenu_confCapacité à s’en sortir:RegionOuest" =
+      "Revenu - capacité à s’en sortir × Région de l'Ouest",
+    
+    "Revenu_confSuffisant pour vivre confortablement:RegionOuest" =
+      "Revenu - confortable × Région de l'Ouest",
+    
+    "Milieu_rural_urbainZone rurale:RegionOuest" =
+      "Milieu rural × Région de l'Ouest",
+    
+    "Populisme_Indice:RegionOuest" =
+      "Attitudes populistes × Région de l'Ouest",
+    
+    "Nativisme_moyenne:RegionOuest" =
+      "Attitudes nativistes × Région de l'Ouest",
+    
+    "Autoritarisme_moyenne:RegionOuest" =
+      "Attitudes autoritaires × Région de l'Ouest",
+    
+    "euftf_recoded:RegionOuest" =
+      "Attitudes eurosceptiques × Région de l'Ouest"
+  ),
+  
+  stars = c(
+    "*" = 0.1,
+    "**" = 0.05,
+    "***" = 0.01
+  ),
+  
+  statistic = "({std.error})",
+  
+  gof_map = c(
+    "nobs",
+    "logLik",
+    "AIC"
+  ),
+  
+  notes = "Source : European Social Survey (dixième vague).",
+  
+  output = "gt"
+)
+
+gtsave(
+  tableau_regions,
+  "tableau_regions.png"
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Model_Est <- glm(Prox_ED ~  gender + Niv_education + Revenu + Populisme_Indice + Nativisme_moyenne + Autoritarisme_moyenne + euftf_recoded, family = binomial(link = "logit"), data = Data_Est_Jeunes_sansHU)
+
+summary(Model_Est)
+
+Model_Ouest <- glm(Prox_ED ~  gender + Niv_education + Revenu + Populisme_Indice + Nativisme_moyenne + Autoritarisme_moyenne + euftf_recoded, family = binomial(link = "logit"), data = Data_Ouest_Jeunes_2)
+
+summary(Model_Ouest)
+
+Model_régions <- glm(Prox_ED ~ gender + Niv_education + Revenu + Populisme_Indice + Nativisme_moyenne + Autoritarisme_moyenne + euftf_recoded + gender * Region + Niv_education * Region + Revenu * Region + Populisme_Indice * Region + Nativisme_moyenne * Region + Autoritarisme_moyenne * Region + euftf_recoded * Region, family = binomial(link = "logit"), data = Data_Jeunes_sansHU)
+
+summary(Model_régions)
+
+
+
+
+Model_Est <- glm(Prox_ED ~  gender + Niv_education + Revenu + Populisme_Indice + Nativisme_moyenne + Autoritarisme_moyenne + euftf_recoded, family = binomial(link = "logit"), data = Data_Est_Jeunes_sansPL)
+
+summary(Model_Est)
+
+Model_Ouest <- glm(Prox_ED ~  gender + Niv_education + Revenu + Populisme_Indice + Nativisme_moyenne + Autoritarisme_moyenne + euftf_recoded, family = binomial(link = "logit"), data = Data_Ouest_Jeunes_2)
+
+summary(Model_Ouest)
+
+Model_régions <- glm(Prox_ED ~ gender + Niv_education + Revenu + Populisme_Indice + Nativisme_moyenne + Autoritarisme_moyenne + euftf_recoded + gender * Region + Niv_education * Region + Revenu * Region + Populisme_Indice * Region + Nativisme_moyenne * Region + Autoritarisme_moyenne * Region + euftf_recoded * Region, family = binomial(link = "logit"), data = Data_Jeunes_sansPL)
+
+summary(Model_régions)
+
+```
+
+### IL FAUDRAIT CONTROLER POUR LES PARTIS D'EXTREME DROITE QUI SONT AU GOUVERNEMENT PEUT-ETRE MAIS IL SEMBLE QUE BOLLEN SOIT NEGATIF CHEZ LES JEUNES DANS TOUS LES PAYS DE L'EST ET L'ANTI-ELITISME PAREIL. PEOPLECENTRISM SOIT NEGATIF OU POSITIF MAIS NON SIGNIFICATIF
+
+```{r}
+
+# Regarder les resultats à l'Est individuellement
+
+Model_Poland <- glm(Prox_ED ~  gender + Niv_education + Revenu_conf  + Milieu_rural_urbain + Populisme_Indice + Nativisme_moyenne + Autoritarisme_moyenne + euftf_recoded, family = binomial(link = "logit"), data = Data_Poland)
+
+summary(Model_Poland)
+
+
+
+
+Model_Hongrie <- glm(Prox_ED ~  gender + Niv_education + Revenu_conf  + Milieu_rural_urbain + Populisme_Indice + Nativisme_moyenne + Autoritarisme_moyenne + euftf_recoded, family = binomial(link = "logit"), data = Data_Hungary)
+
+summary(Model_Hongrie)
+
+
+
+Model_Czechia <- glm(Prox_ED ~  gender + Niv_education + Revenu_conf  + Milieu_rural_urbain + Populisme_Indice + Nativisme_moyenne + Autoritarisme_moyenne + euftf_recoded, family = binomial(link = "logit"), data = Data_Czechia)
+
+summary(Model_Czechia)
+
+
+
+
+Model_Slovenia <- glm(Prox_ED ~  gender + Niv_education + Revenu_conf  + Milieu_rural_urbain + Populisme_Indice + Nativisme_moyenne + Autoritarisme_moyenne + euftf_recoded, family = binomial(link = "logit"), data = Data_Slovenia)
+
+summary(Model_Slovenia)
+
+
+
+
+
+Model_Estonia <- glm(Prox_ED ~  gender + Niv_education + Revenu_conf  + Milieu_rural_urbain + Populisme_Indice + Nativisme_moyenne + Autoritarisme_moyenne + euftf_recoded, family = binomial(link = "logit"), data = Data_Estonia)
+
+summary(Model_Estonia)
+
+
+Model_Slovakia <- glm(Prox_ED ~  gender + Niv_education + Revenu_conf  + Milieu_rural_urbain + Populisme_Indice + Nativisme_moyenne + Autoritarisme_moyenne + euftf_recoded, family = binomial(link = "logit"), data = Data_Slovakia)
+
+summary(Model_Slovakia)
+
+
+Model_Bulgaria <- glm(Prox_ED ~  gender + Niv_education + Revenu_conf  + Milieu_rural_urbain + Populisme_Indice + Nativisme_moyenne + Autoritarisme_moyenne + euftf_recoded, family = binomial(link = "logit"), data = Data_Bulgaria)
+
+summary(Model_Bulgaria)
+
+
+# Regarder les resultats pour anti-elitisme et people-centrism
+
+
+Model_Poland <- glm(Prox_ED ~ gender + Niv_education + Revenu + AntiElitism + PeopleCentrism + Nativism_lat + Authoritarianism_lat + SocConservatism_lat + euftf_recoded + gincdif_recoded + gender * Jeunes + Niv_education * Jeunes + Revenu * Jeunes + AntiElitism *Jeunes + PeopleCentrism * Jeunes + Nativism_lat * Jeunes + Authoritarianism_lat * Jeunes + SocConservatism_lat * Jeunes + euftf_recoded * Jeunes + gincdif_recoded * Jeunes, family = binomial(link = "logit"), data = Data_Poland)
+
+summary(Model_Poland)
+
+
+Model_Poland_Jeunes <- glm(Prox_ED ~ gender + Niv_education + Revenu + AntiElitism + PeopleCentrism + Nativism_lat + Authoritarianism_lat + SocConservatism_lat + euftf_recoded + gincdif_recoded, family = binomial(link = "logit"), data = Data_Poland_Young)
+
+summary(Model_Poland_Jeunes)
+
+
+
+Model_Hongrie <- glm(Prox_ED ~ gender + Niv_education + Revenu + AntiElitism + PeopleCentrism + Nativism_lat + Authoritarianism_lat + SocConservatism_lat + euftf_recoded + gincdif_recoded + gender * Jeunes + Niv_education * Jeunes + Revenu * Jeunes + AntiElitism *Jeunes + PeopleCentrism * Jeunes + Nativism_lat * Jeunes + Authoritarianism_lat * Jeunes + SocConservatism_lat * Jeunes + euftf_recoded * Jeunes + gincdif_recoded * Jeunes, family = binomial(link = "logit"), data = Data_Hungary)
+
+summary(Model_Hongrie)
+
+
+Model_Hongrie_Jeunes <- glm(Prox_ED ~ gender + Niv_education + Revenu + AntiElitism + PeopleCentrism + Nativism_lat + Authoritarianism_lat + SocConservatism_lat + euftf_recoded + gincdif_recoded, family = binomial(link = "logit"), data = Data_Hungary_Young)
+
+summary(Model_Hongrie_Jeunes)
+
+
+
+Model_Czechia <- glm(Prox_ED ~ gender + Niv_education + Revenu + AntiElitism + PeopleCentrism + Nativism_lat + Authoritarianism_lat + SocConservatism_lat + euftf_recoded + gincdif_recoded + gender * Jeunes + Niv_education * Jeunes + Revenu * Jeunes + AntiElitism * Jeunes + PeopleCentrism * Jeunes + Nativism_lat * Jeunes + Authoritarianism_lat * Jeunes + SocConservatism_lat * Jeunes + euftf_recoded * Jeunes + gincdif_recoded * Jeunes, family = binomial(link = "logit"), data = Data_Czechia)
+
+summary(Model_Czechia)
+
+
+Model_Czechia_Jeunes <- glm(Prox_ED ~ gender + Niv_education + Revenu + AntiElitism + PeopleCentrism + Nativism_lat + Authoritarianism_lat + SocConservatism_lat + euftf_recoded + gincdif_recoded, family = binomial(link = "logit"), data = Data_Czechia_Young )
+
+summary(Model_Czechia_Jeunes)
+
+
+
+Model_Slovenia <- glm(Prox_ED ~ gender + Niv_education + Revenu + AntiElitism + PeopleCentrism + Nativism_lat + Authoritarianism_lat + SocConservatism_lat + euftf_recoded + gincdif_recoded + gender * Jeunes + Niv_education * Jeunes + Revenu * Jeunes + AntiElitism * Jeunes + PeopleCentrism * Jeunes + Nativism_lat * Jeunes + Authoritarianism_lat * Jeunes + SocConservatism_lat * Jeunes + euftf_recoded * Jeunes + gincdif_recoded * Jeunes, family = binomial(link = "logit"), data = Data_Slovenia)
+
+summary(Model_Slovenia)
+
+
+Model_Slovenia_Jeunes <- glm(Prox_ED ~ gender + Niv_education + Revenu + AntiElitism + PeopleCentrism + Nativism_lat + Authoritarianism_lat + SocConservatism_lat + euftf_recoded + gincdif_recoded, family = binomial(link = "logit"), data = Data_Slovenia_Young)
+
+summary(Model_Slovenia_Jeunes)
+
+
+
+```
+
+## CRÉER UN TABLEAU ILLSUTRANT LES DONNÉES POUR LA PARTIE METHODOLOGIE
+
+```{r}
+
+
+
+# Creer une variable pour identifier les pays en chaines de caractères 
+
+
+Data_2_new <- Data_2_new %>% mutate(Pays = case_when(
+cntry == "FR" ~ "France",
+cntry == "DE" ~ "Allemagne",
+cntry == "IT" ~ "Italie",
+cntry == "AT" ~ "Autriche",
+cntry == "ES" ~ "Espagne",
+cntry == "BE" ~ "Belgique",
+cntry == "HU" ~ "Hongrie",
+cntry == "PL" ~ "Pologne",
+cntry == "PT" ~ "Portugal",
+cntry == "CH" ~ "Suisse",
+cntry == "SE" ~ "Suède",
+cntry == "NL" ~ "Pays-Bas",
+cntry == "SI" ~ "Slovénie",
+cntry == "CZ" ~ "République tchèque",
+cntry == "EE" ~ "Estonie",
+cntry == "SK" ~ "Slovaquie",
+cntry == "BG" ~ "Bulgarie"))
+
+# créer une variable pour identifier les partis d'extreme droite 
+
+
+Data_2_new <- Data_2_new %>% mutate (Parti_ED = case_when (
+Pays == "France" & prtclffr == 11 ~ "Rassemblement National (RN)", Pays == "Allemagne" & prtclfde == 6 ~ "Alternative für Deutschland (AfD)", 
+Pays == "Italie" & prtcleit %in% c(5, 3) ~ "Fratelli d'Italia; Lega per Salvini Premier",
+Pays == "Autriche" & prtcldat == 3 ~ "Freiheitliche Partei Österreichs (FPÖ)",
+Pays == "Espagne" & prtclges == 3 ~ "VOX",
+Pays == "Belgique" &prtclebe == 6 ~ "Vlaams Belang",
+Pays == "Hongrie" & prtclhhu == 3 ~ "Fidesz – Magyar Polgári Szövetség",
+Pays == "Pologne" & prtclipl == 2 ~ "Prawo i Sprawiedliwość (PiS)",
+Pays == "Portugal" & prtclfpt == 4 ~ "Chega!",
+Pays == "Suisse" & prtclhch %in% c(1, 9, 14) ~ "Schweizerische Volkspartei (SVP); Lega dei Ticinesi; Mouvement citoyens genevois (MCG)",
+Pays == "Suède" & prtcldse == 7 ~  "Sverigedemokraterna",
+Pays == "Pays-Bas" & prtclgnl == 3 ~ "Partij voor de Vrijheid",
+Pays == "Slovénie" & prtclfsi %in% c(8, 4, 11) ~ "Slovenska Demokratska Stranka (SDS); Nova Slovenija – Kršcanski demokrati (NSI); Slovenska Nacionalna Stranka (SNS)",
+Pays == "République tchèque" & prtvtecz == 8 ~ "Svoboda a přímá demokracie",
+Pays == "Estonie" & prtclhee == 6 ~ "Eesti Konservatiivne Rahvaerakond",
+Pays == "Slovaquie" & prtclesk == 3 ~ "SME Rodina",
+Pays == "Bulgarie" & prtclebg %in% c(9, 8, 6, 7) ~ "Vazrazhdane; Ataka; Balgarsko natsionalno dvizhenie; NFSB–Volya"))
+
+table (Data_2_new$Parti_ED)
+
+
+
+# sans partis non eurosceptiques 
+
+Data_2_new <- Data_2_new %>% mutate (Parti_ED = case_when (
+  Pays == "France" & prtclffr == 11 ~ "Rassemblement National (RN)", Pays == "Allemagne" & prtclfde == 6 ~ "Alternative für Deutschland (AfD)", 
+  Pays == "Italie" & prtcleit %in% c(5, 3) ~ "Fratelli d'Italia (FdI); Lega per Salvini Premier (LSP)",
+  Pays == "Autriche" & prtcldat == 3 ~ "Freiheitliche Partei Österreichs (FPÖ)",
+  Pays == "Espagne" & prtclges == 3 ~ "VOX",
+  Pays == "Belgique" &prtclebe == 6 ~ "Vlaams Belang (VB)",
+  Pays == "Hongrie" & prtclhhu == 3 ~ "Fidesz – Magyar Polgári Szövetség (Fidesz)",
+  Pays == "Pologne" & prtclipl == 2 ~ "Prawo i Sprawiedliwość (PiS)",
+  Pays == "Portugal" & prtclfpt == 4 ~ "Chega!",
+  Pays == "Suisse" & prtclhch %in% c(1, 9, 14) ~ "Schweizerische Volkspartei (SVP); Lega dei Ticinesi (Lega); Mouvement citoyens genevois (MCG)",
+  Pays == "Suède" & prtcldse == 7 ~  "Sverigedemokraterna (SD)",
+  Pays == "Pays-Bas" & prtclgnl == 3 ~ "Partij voor de Vrijheid (PVV)",
+  Pays == "Slovénie" & prtclfsi == 11 ~ "Slovenska Nacionalna Stranka (SNS)",
+  Pays == "République tchèque" & prtvtecz == 8 ~ "Svoboda a přímá demokracie (SPD)",
+  Pays == "Estonie" & prtclhee == 6 ~ "Eesti Konservatiivne Rahvaerakond (EKRE)",
+  Pays == "Slovaquie" & prtclesk == 3 ~ "SME Rodina",
+  Pays == "Bulgarie" & prtclebg %in% c(9, 8, 6, 7) ~ "Vazrazhdane; Ataka; Balgarsko natsionalno dvizhenie (BND); NFSB–Volya"))
+
+table (Data_2_new$Parti_ED)
+
+
+# Calculer les statistiques
+
+Stat_pays <- Data_2_new %>% group_by (Pays) %>% summarise (Jeunes_total = sum(Jeunes ==1), Electeurs_ED_total = sum(!is.na(Parti_ED)), Echantillon_total = n(),
+                                                           .groups = "drop")
+
+
+
+Stat_ED <- Data_2_new %>% filter(Jeunes == 1, !is.na(Parti_ED)) %>% group_by(Pays, Parti_ED) %>% summarise (Jeunes_ED = n(), .groups = "drop")
+
+
+
+
+Data_Tableau <- Stat_ED %>% left_join(Stat_pays, by = "Pays")
+
+
+Data_Tableau <- Data_Tableau %>%
+  select(
+    Pays,
+    Parti_ED,
+    Jeunes_ED,
+    Electeurs_ED_total,  
+    Jeunes_total,
+    Echantillon_total
+  )
+
+# Créer le tableau
+
+
+
+Tableau_descriptif <- Data_Tableau %>%
+  kable(
+    caption = "Répartition des jeunes se sentant proche d'un parti d'extrême droite populiste par pays",
+    col.names = c(
+      "Pays",
+      "Partis d'extrême droite populistes",
+      "Nombre de jeunes d'extrême droite",
+      "Nombre total de personnes d'extrême droite",
+      "Nombre total de jeunes",
+      "Échantillon total"
+    ),
+    align = c("l", "l", "c", "c", "c", "c")
+  ) %>%
+  kable_styling(
+    position = "center",
+    full_width = FALSE
+  ) %>%
+  kable_classic() %>%
+  footnote(
+    general_title = "Note.",
+    general = "Sont considérés comme relevant de l’extrême droite les individus déclarant un parti d’extrême droite populiste comme le parti auquel ils se sentent le plus proches.",
+    footnote_as_chunk = TRUE
+  ) %>%
+  row_spec(0, bold = TRUE)
+
+Tableau_descriptif
+
+
+
+
+
+Data_Tableau <- Data_Tableau %>%
+  select(
+    Pays,
+    Parti_ED,
+    Jeunes_ED,
+    Jeunes_total
+  )
+
+# Créer le tableau
+
+Tableau_descriptif <- Data_Tableau %>%
+  kable(
+    col.names = c(
+      "Pays",
+      "Partis d'extrême droite populistes",
+      "Nombre de jeunes proches d'un parti d'extrême droite populiste",
+      "Nombre total de jeunes"
+    ),
+    align = c("l", "l", "c", "c")
+  ) %>%
+  kable_styling(
+    position = "center",
+    full_width = FALSE
+  ) %>%
+  kable_classic() %>%
+  row_spec(0, bold = TRUE)
+
+Tableau_descriptif
+
+
+# Enregistrer le tableau 
+
+
+save_kable(Tableau_descriptif, "tableau.html")
+
+webshot("tableau.html", "tableau.jpeg")
+
+
+
+
+
+```
+
+## 
+
+## REFAIRE LES TESTS D'INDICE QUE SUR LES DONNEES DES JEUNES
+
+```{r}
+
+# Populisme 1 : Anti-élitisme 
+
+
+Variables_indice <- Data_Jeunes [, c("trstplt_recoded_2", "psppipla_recoded", "psppsgva_recoded")]
+
+Variables_indice <- na.omit(Variables_indice)
+
+cronbachAlpha <- round(psych::alpha(Variables_indice)$total$raw_alpha, 2)
+
+factorAnal <- factanal(Variables_indice, factors = 1)
+
+factorLoadings <- as.numeric(factorAnal$loadings[,1])
+
+factor1stEigen <- round(eigen(cor(Variables_indice))$values[1], 2)
+
+factorVarNames <- c(
+  "Confiance envers les politiciens",
+  "Sentiment d'influence dans politique",
+  "Sentiment d'influence dans décisions gouvernement"
+)
+
+Indice_antielitisme <- ggplot(data.frame(factorVarNames, factorLoadings), 
+       aes(x = factorVarNames, y = factorLoadings)) + 
+  
+  coord_flip() +
+  
+  geom_bar(stat = "identity", colour = "seagreen2", fill = "seagreen2",
+           size = 1, width = 0.4) +
+  
+  geom_text(aes(label = round(factorLoadings, 2)), 
+            vjust = 0.35, hjust = -0.3) +
+  
+  
+  geom_hline(yintercept = 0.3, colour = "black", linetype = "longdash") +
+  
+  
+  annotate("text",
+           label = paste("Cronbach alpha =", cronbachAlpha),
+           x = 1,
+           y = 1.3,
+           size = 5) +
+  
+  annotate("text",
+           label = paste("First Eigenvalue =", factor1stEigen),
+           x = 2,
+           y = 1.3,
+           size = 5) +
+  
+  scale_y_continuous(name = "Factor loadings",
+                     limits = c(0, 1.5),
+                     breaks = seq(0, 1, by = 0.1)) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(axis.text.y = element_text(size = 14), 
+        axis.title.x = element_text(size = 14),
+        axis.text.x  = element_text(size = 11),
+        panel.grid = element_blank())
+
+
+
+ggsave(
+  "Indice_antielitisme.jpg",
+  plot = Indice_antielitisme,
+  width = 10,
+  height = 6,
+  dpi = 300
+)
+
+
+
+
+
+
+
+Indice_antielitisme <- ggplot(
+  data.frame(factorVarNames, factorLoadings), 
+  aes(x = factorVarNames, y = factorLoadings)
+) + 
+  
+  coord_flip() +
+  
+  geom_bar(
+    stat = "identity",
+    colour = "seagreen2",
+    fill = "seagreen2",
+    size = 1,
+    width = 0.4
+  ) +
+  
+  geom_text(
+    aes(label = round(factorLoadings, 2)), 
+    vjust = 0.35,
+    hjust = -0.3
+  ) +
+  
+  geom_hline(
+    yintercept = 0.3,
+    colour = "black",
+    linetype = "longdash"
+  ) +
+  
+  annotate(
+    "text",
+    label = paste("Cronbach alpha =", cronbachAlpha),
+    x = 1,
+    y = 1.00,
+    size = 5,
+    hjust = 0
+  ) +
+  
+  annotate(
+    "text",
+    label = paste("First Eigenvalue =", factor1stEigen),
+    x = 2,
+    y = 1.00,
+    size = 5,
+    hjust = 0
+  ) +
+  
+  scale_y_continuous(
+    name = "Factor loadings",
+    limits = c(0, 1.4),
+    breaks = seq(0, 1, by = 0.1)
+  ) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(
+    axis.text.y = element_text(size = 14), 
+    axis.title.x = element_text(size = 14),
+    axis.text.x = element_text(size = 11),
+    panel.grid = element_blank()
+  )
+
+
+ggsave(
+  "Indice_antielitisme.jpg",
+  plot = Indice_antielitisme,
+  width = 12,
+  height = 6,
+  dpi = 300
+)
+
+# Populisme 2 : People-Centrisme
+
+
+Variables_indice <- Data_Jeunes [, c("votedir_recoded", "wpestop_recoded", "viepol_recoded")]
+
+Variables_indice <- na.omit(Variables_indice)
+
+cronbachAlpha <- round(psych::alpha(Variables_indice)$total$raw_alpha, 2)
+
+factorAnal <- factanal(Variables_indice, factors = 1)
+
+factorLoadings <- as.numeric(factorAnal$loadings[,1])
+
+factor1stEigen <- round(eigen(cor(Variables_indice))$values[1], 2)
+
+factorVarNames <- c(
+  "Importance referendums pour enjeux plus importants ",
+  "Importance volonté du peuple instoppable",
+  "Importance perceptions peuple au-dessus celles élites"
+)
+
+Indice_peoplecentrisme <- ggplot(data.frame(factorVarNames, factorLoadings), 
+       aes(x = factorVarNames, y = factorLoadings)) + 
+  
+  coord_flip() +
+  
+  geom_bar(stat = "identity", colour = "seagreen2", fill = "seagreen2",
+           size = 1, width = 0.4) +
+  
+  geom_text(aes(label = round(factorLoadings, 2)), 
+            vjust = 0.35, hjust = -0.3) +
+  
+  
+  geom_hline(yintercept = 0.3, colour = "black", linetype = "longdash") +
+  
+  
+  annotate("text",
+           label = paste("Cronbach alpha =", cronbachAlpha),
+           x = 1,
+           y = 1.3,
+           size = 5) +
+  
+  annotate("text",
+           label = paste("First Eigenvalue =", factor1stEigen),
+           x = 2,
+           y = 1.3,
+           size = 5) +
+  
+  scale_y_continuous(name = "Factor loadings",
+                     limits = c(0, 1.5),
+                     breaks = seq(0, 1, by = 0.1)) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(axis.text.y = element_text(size = 14), 
+        axis.title.x = element_text(size = 14),
+        axis.text.x  = element_text(size = 11),
+        panel.grid = element_blank())
+
+
+ggsave(
+  "Indice_peoplecentrisme.jpg",
+  plot = Indice_peoplecentrisme,
+  width = 10,
+  height = 6,
+  dpi = 300
+)
+
+
+
+
+
+
+Indice_peoplecentrisme <- ggplot(
+  data.frame(factorVarNames, factorLoadings), 
+  aes(x = factorVarNames, y = factorLoadings)
+) + 
+  
+  coord_flip() +
+  
+  geom_bar(
+    stat = "identity",
+    colour = "seagreen2",
+    fill = "seagreen2",
+    size = 1,
+    width = 0.4
+  ) +
+  
+  geom_text(
+    aes(label = round(factorLoadings, 2)), 
+    vjust = 0.35,
+    hjust = -0.3
+  ) +
+  
+  geom_hline(
+    yintercept = 0.3,
+    colour = "black",
+    linetype = "longdash"
+  ) +
+  
+  annotate(
+    "text",
+    label = paste("Cronbach alpha =", cronbachAlpha),
+    x = 1,
+    y = 1.00,
+    size = 5,
+    hjust = 0
+  ) +
+  
+  annotate(
+    "text",
+    label = paste("First Eigenvalue =", factor1stEigen),
+    x = 2,
+    y = 1.00,
+    size = 5,
+    hjust = 0
+  ) +
+  
+  scale_y_continuous(
+    name = "Factor loadings",
+    limits = c(0, 1.4),
+    breaks = seq(0, 1, by = 0.1)
+  ) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(
+    axis.text.y = element_text(size = 14), 
+    axis.title.x = element_text(size = 14),
+    axis.text.x = element_text(size = 11),
+    panel.grid = element_blank()
+  )
+
+
+ggsave(
+  "Indice_peoplecentrisme.jpg",
+  plot = Indice_peoplecentrisme,
+  width = 12,
+  height = 6,
+  dpi = 300
+)
+
+
+
+
+
+
+
+
+# Nativisme 
+
+
+Variables_indice <- Data_Jeunes [, c("imbgeco_recoded", "imueclt_recoded", "imwbcnt_recoded")]
+
+Variables_indice <- na.omit(Variables_indice)
+
+cronbachAlpha <- round(psych::alpha(Variables_indice)$total$raw_alpha, 2)
+
+factorAnal <- factanal(Variables_indice, factors = 1)
+
+factorLoadings <- as.numeric(factorAnal$loadings[,1])
+
+factor1stEigen <- round(eigen(cor(Variables_indice))$values[1], 2)
+
+factorVarNames <- c(
+  "Immigration mauvaise economie",
+  "Immigration mauvaise culture",
+  "Immigration mauvaise qualité vie"
+)
+
+Indice_Nativisme <- ggplot(data.frame(factorVarNames, factorLoadings), 
+       aes(x = factorVarNames, y = factorLoadings)) + 
+  
+  coord_flip() +
+  
+  geom_bar(stat = "identity", colour = "cornflowerblue", fill = "cornflowerblue",
+           size = 1, width = 0.4) +
+  
+  geom_text(aes(label = round(factorLoadings, 2)), 
+            vjust = 0.35, hjust = -0.3) +
+  
+  
+  geom_hline(yintercept = 0.3, colour = "gray", linetype = "longdash") +
+  
+  
+  annotate("text",
+           label = paste("Cronbach alpha =", cronbachAlpha),
+           x = 1,
+           y = 1.3,
+           size = 5) +
+  
+  annotate("text",
+           label = paste("First Eigenvalue =", factor1stEigen),
+           x = 2,
+           y = 1.3,
+           size = 5) +
+  
+  scale_y_continuous(name = "Factor loadings",
+                     limits = c(0, 1.5),
+                     breaks = seq(0, 1, by = 0.1)) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(axis.text.y = element_text(size = 14), 
+        axis.title.x = element_text(size = 14),
+        axis.text.x  = element_text(size = 11),
+        panel.grid = element_blank())
+
+
+
+
+ggsave(
+  "Indice_Nativisme.jpg",
+  plot = Indice_Nativisme,
+  width = 10,
+  height = 6,
+  dpi = 300
+)
+
+
+
+# Autoritarisme
+
+
+Variables_indice <- Data_Jeunes [, c("accalaw_recoded_2", "loylead_recoded", "lrnobed_recoded")]
+
+Variables_indice <- na.omit(Variables_indice)
+
+cronbachAlpha <- round(psych::alpha(Variables_indice)$total$raw_alpha, 2)
+
+factorAnal <- factanal(Variables_indice, factors = 1)
+
+factorLoadings <- as.numeric(factorAnal$loadings[,1])
+
+factor1stEigen <- round(eigen(cor(Variables_indice))$values[1], 2)
+
+factorVarNames <- c(
+  "Acceptance leader fort au-dessus lois",
+  "Loyauté leader est ce dont pays a le plus besoin",
+  "Respect et obéissance comme valeurs les plus importantes pour enfants"
+)
+
+Indice_autoritarisme <- ggplot(data.frame(factorVarNames, factorLoadings), 
+       aes(x = factorVarNames, y = factorLoadings)) + 
+  
+  coord_flip() +
+  
+  geom_bar(stat = "identity", colour = "cornflowerblue", fill = "cornflowerblue",
+           size = 1, width = 0.4) +
+  
+  geom_text(aes(label = round(factorLoadings, 2)), 
+            vjust = 0.35, hjust = -0.3) +
+  
+  
+  geom_hline(yintercept = 0.3, colour = "gray", linetype = "longdash") +
+  
+  
+  annotate("text",
+           label = paste("Cronbach alpha =", cronbachAlpha),
+           x = 1,
+           y = 1.3,
+           size = 5) +
+  
+  annotate("text",
+           label = paste("First Eigenvalue =", factor1stEigen),
+           x = 2,
+           y = 1.3,
+           size = 5) +
+  
+  scale_y_continuous(name = "Factor loadings",
+                     limits = c(0, 1.5),
+                     breaks = seq(0, 1, by = 0.1)) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(axis.text.y = element_text(size = 14), 
+        axis.title.x = element_text(size = 14),
+        axis.text.x  = element_text(size = 11),
+        panel.grid = element_blank())
+
+
+
+ggsave(
+  "Indice_autoritarisme.jpg",
+  plot = Indice_autoritarisme,
+  width = 10,
+  height = 6,
+  dpi = 300
+)
+
+
+
+
+
+
+
+Indice_autoritarisme <- ggplot(
+  data.frame(factorVarNames, factorLoadings), 
+  aes(x = factorVarNames, y = factorLoadings)
+) + 
+  
+  coord_flip() +
+  
+  geom_bar(
+    stat = "identity",
+    colour = "cornflowerblue",
+    fill = "cornflowerblue",
+    size = 1,
+    width = 0.4
+  ) +
+  
+  geom_text(
+    aes(label = round(factorLoadings, 2)), 
+    vjust = 0.35,
+    hjust = -0.3
+  ) +
+  
+  geom_hline(
+    yintercept = 0.3,
+    colour = "gray",
+    linetype = "longdash"
+  ) +
+  
+  annotate(
+    "text",
+    label = paste("Cronbach alpha =", cronbachAlpha),
+    x = 1,
+    y = 0.80,
+    size = 5,
+    hjust = 0
+  ) +
+  
+  annotate(
+    "text",
+    label = paste("First Eigenvalue =", factor1stEigen),
+    x = 1.60,
+    y = 0.80,
+    size = 5,
+    hjust = 0
+  ) +
+  
+  scale_y_continuous(
+    name = "Factor loadings",
+    limits = c(0, 1.4),
+    breaks = seq(0, 1, by = 0.1)
+  ) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(
+    axis.text.y = element_text(size = 14), 
+    axis.title.x = element_text(size = 14),
+    axis.text.x = element_text(size = 11),
+    panel.grid = element_blank()
+  )
+
+
+ggsave(
+  "Indice_autoritarisme.jpg",
+  plot = Indice_autoritarisme,
+  width = 12,
+  height = 6,
+  dpi = 300
+)
+
+
+
+
+# Conservatisme social 
+
+
+
+Variables_indice <- Data_Jeunes [, c("freehms_recoded", "hmsfmlsh_recoded", "hmsacld_recoded")]
+
+Variables_indice <- na.omit(Variables_indice)
+
+cronbachAlpha <- round(psych::alpha(Variables_indice)$total$raw_alpha, 2)
+
+factorAnal <- factanal(Variables_indice, factors = 1)
+
+factorLoadings <- as.numeric(factorAnal$loadings[,1])
+
+factor1stEigen <- round(eigen(cor(Variables_indice))$values[1], 2)
+
+factorVarNames <- c(
+  "Liberté vie gays",
+  "Honte proche gay",
+  "enfants gays"
+)
+
+ggplot(data.frame(factorVarNames, factorLoadings), 
+       aes(x = factorVarNames, y = factorLoadings)) + 
+  
+  coord_flip() +
+  
+  geom_bar(stat = "identity", colour = "cornflowerblue", fill = "cornflowerblue",
+           size = 1, width = 0.4) +
+  
+  geom_text(aes(label = round(factorLoadings, 2)), 
+            vjust = 0.35, hjust = -0.3) +
+  
+  
+  geom_hline(yintercept = 0.3, colour = "gray", linetype = "longdash") +
+  
+  
+  annotate("text",
+           label = paste("Cronbach alpha =", cronbachAlpha),
+           x = 1,
+           y = 1.3,
+           size = 5) +
+  
+  annotate("text",
+           label = paste("First Eigenvalue =", factor1stEigen),
+           x = 2,
+           y = 1.3,
+           size = 5) +
+  
+  scale_y_continuous(name = "Factor loadings",
+                     limits = c(0, 1.5),
+                     breaks = seq(0, 1, by = 0.1)) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(axis.text.y = element_text(size = 14), 
+        axis.title.x = element_text(size = 14),
+        axis.text.x  = element_text(size = 11),
+        panel.grid = element_blank())
+
+
+
+
+
+
+
+
+Variables_indice <- Data_Jeunes [, c("trstplt_recoded_2", "psppipla_recoded", "psppsgva_recoded", "freehms_recoded", "hmsfmlsh_recoded", "hmsacld_recoded")]
+
+Variables_indice <- na.omit(Variables_indice)
+
+cronbachAlpha <- round(psych::alpha(Variables_indice)$total$raw_alpha, 2)
+
+factorAnal <- factanal(Variables_indice, factors = 1)
+
+factorLoadings <- as.numeric(factorAnal$loadings[,1])
+
+factor1stEigen <- round(eigen(cor(Variables_indice))$values[1], 2)
+
+factorVarNames <- c(
+  "Conf politiciens",
+  "Influence système",
+  "Influence dans decisions gouv",
+  "Liberté vie gays",
+  "Honte proche gay",
+  "enfants gays"
+)
+
+ggplot(data.frame(factorVarNames, factorLoadings), 
+       aes(x = factorVarNames, y = factorLoadings)) + 
+  
+  coord_flip() +
+  
+  geom_bar(stat = "identity", colour = "seagreen2", fill = "seagreen2",
+           size = 1, width = 0.4) +
+  
+  geom_text(aes(label = round(factorLoadings, 2)), 
+            vjust = 0.35, hjust = -0.3) +
+  
+  
+  geom_hline(yintercept = 0.3, colour = "black", linetype = "longdash") +
+  
+  
+  annotate("text",
+           label = paste("Cronbach alpha =", cronbachAlpha),
+           x = 1,
+           y = 1.3,
+           size = 5) +
+  
+  annotate("text",
+           label = paste("First Eigenvalue =", factor1stEigen),
+           x = 2,
+           y = 1.3,
+           size = 5) +
+  
+  scale_y_continuous(name = "Factor loadings",
+                     limits = c(0, 1.5),
+                     breaks = seq(0, 1, by = 0.1)) +
+  
+  xlab("") +
+  
+  theme_linedraw() +
+  theme(axis.text.y = element_text(size = 14), 
+        axis.title.x = element_text(size = 14),
+        axis.text.x  = element_text(size = 11),
+        panel.grid = element_blank())
+
+
+
+
+
+```
+
+# Analyses descriptives
+
+```{r}
+
+
+Pop_data_Ouest <- Data_Ouest_Jeunes %>%
+  filter(!is.na(Populisme_Indice), !is.na(Prox_ED)) %>%
+  mutate(
+    intervalle = cut(
+      Populisme_Indice,
+      breaks = seq(0, 1, 0.2),
+      include.lowest = TRUE
+    )
+  ) %>%
+  count(Prox_ED, intervalle) %>%
+  group_by(Prox_ED) %>%
+  mutate(
+    pourcentage = n / sum(n) * 100
+  ) %>%
+  ungroup()
+
+
+
+Pop_Ouest <- ggplot(
+  Pop_data_Ouest,
+  aes(
+    x = intervalle,
+    y = pourcentage,
+    fill = factor(Prox_ED, levels = c(1, 0))
+  )
+) +
+  geom_col(
+    position = position_dodge(width = 0.9),
+    color = "white"
+  ) +
+  geom_text(
+    aes(
+      label = ifelse(
+        round(pourcentage, 1) == 0,
+        "",
+        paste0(round(pourcentage, 1), "%")
+      )
+    ),
+    position = position_dodge(width = 0.9),
+    vjust = -0.3,
+    size = 3
+  ) +
+  scale_fill_manual(
+    name = "Proximité partisane",
+    values = c(
+      "1" = "turquoise3",
+      "0" = "indianred2"
+    ),
+    labels = c(
+      "1" = "Proche d'un parti d'extrême droite populiste",
+      "0" = "Proche d'un autre type de partis"
+    )
+  ) +
+  labs(
+    x = "Attitudes populistes",
+    y = "Pourcentage de jeunes"
+  ) +
+  theme(
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(
+      linetype = "solid",
+      colour = "grey"
+    )
+  )
+
+
+
+
+
+Pop_Ouest
+
+
+
+
+
+
+
+
+
+
+
+Nat_data_Ouest <- Data_Ouest_Jeunes %>%
+  filter(!is.na(Nativisme_moyenne), !is.na(Prox_ED)) %>%
+  mutate(
+    intervalle = cut(
+      Nativisme_moyenne,
+      breaks = seq(0, 1, 0.2),
+      include.lowest = TRUE
+    )
+  ) %>%
+  count(Prox_ED, intervalle) %>%
+  group_by(Prox_ED) %>%
+  mutate(
+    pourcentage = n / sum(n) * 100
+  ) %>%
+  ungroup()
+
+
+
+Nat_Ouest <- ggplot(
+  Nat_data_Ouest,
+  aes(
+    x = intervalle,
+    y = pourcentage,
+    fill = factor(Prox_ED, levels = c(1, 0))
+  )
+) +
+  geom_col(
+    position = position_dodge(width = 0.9),
+    color = "white"
+  ) +
+  geom_text(
+    aes(
+      label = ifelse(
+        round(pourcentage, 1) == 0,
+        "",
+        paste0(round(pourcentage, 1), "%")
+      )
+    ),
+    position = position_dodge(width = 0.9),
+    vjust = -0.3,
+    size = 3
+  ) +
+  scale_fill_manual(
+    name = "Proximité partisane",
+    values = c(
+      "1" = "turquoise3",
+      "0" = "indianred2"
+    ),
+    labels = c(
+      "1" = "Proche d'un parti d'extrême droite populiste",
+      "0" = "Proche d'un autre type de partis"
+    )
+  ) +
+  labs(
+    x = "Attitudes nativistes",
+    y = "Pourcentage de jeunes"
+  ) +
+  theme(
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(
+      linetype = "solid",
+      colour = "grey"
+    )
+  )
+
+
+
+Nat_Ouest
+
+
+
+
+
+
+
+
+Aut_data_Ouest <- Data_Ouest_Jeunes %>%
+  filter(!is.na(Autoritarisme_moyenne), !is.na(Prox_ED)) %>%
+  mutate(
+    intervalle = cut(
+      Autoritarisme_moyenne,
+      breaks = seq(0, 1, 0.2),
+      include.lowest = TRUE
+    )
+  ) %>%
+  count(Prox_ED, intervalle) %>%
+  group_by(Prox_ED) %>%
+  mutate(
+    pourcentage = n / sum(n) * 100
+  ) %>%
+  ungroup()
+
+
+
+Aut_Ouest <- ggplot(
+  Aut_data_Ouest,
+  aes(
+    x = intervalle,
+    y = pourcentage,
+    fill = factor(Prox_ED, levels = c(1, 0))
+  )
+) +
+  geom_col(
+    position = position_dodge(width = 0.9),
+    color = "white"
+  ) +
+  geom_text(
+    aes(
+      label = ifelse(
+        round(pourcentage, 1) == 0,
+        "",
+        paste0(round(pourcentage, 1), "%")
+      )
+    ),
+    position = position_dodge(width = 0.9),
+    vjust = -0.3,
+    size = 3
+  ) +
+  scale_fill_manual(
+    name = "Proximité partisane",
+    values = c(
+      "1" = "turquoise3",
+      "0" = "indianred2"
+    ),
+    labels = c(
+      "1" = "Proche d'un parti d'extrême droite populiste",
+      "0" = "Proche d'un autre type de partis"
+    )
+  ) +
+  labs(
+    x = "Attitudes autoritaires",
+    y = "Pourcentage de jeunes"
+  ) +
+  theme(
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(
+      linetype = "solid",
+      colour = "grey"
+    )
+  )
+
+
+
+Aut_Ouest
+
+
+
+
+
+Eur_data_Ouest <- Data_Ouest_Jeunes %>%
+  filter(!is.na(euftf_recoded), !is.na(Prox_ED)) %>%
+  mutate(
+    intervalle = cut(
+      euftf_recoded,
+      breaks = seq(0, 1, 0.2),
+      include.lowest = TRUE
+    )
+  ) %>%
+  count(Prox_ED, intervalle) %>%
+  group_by(Prox_ED) %>%
+  mutate(
+    pourcentage = n / sum(n) * 100
+  ) %>%
+  ungroup()
+
+
+
+Eur_Ouest <- ggplot(
+  Eur_data_Ouest,
+  aes(
+    x = intervalle,
+    y = pourcentage,
+    fill = factor(Prox_ED, levels = c(1, 0))
+  )
+) +
+  geom_col(
+    position = position_dodge(width = 0.9),
+    color = "white"
+  ) +
+  geom_text(
+    aes(
+      label = ifelse(
+        round(pourcentage, 1) == 0,
+        "",
+        paste0(round(pourcentage, 1), "%")
+      )
+    ),
+    position = position_dodge(width = 0.9),
+    vjust = -0.3,
+    size = 3
+  ) +
+  scale_fill_manual(
+    name = "Proximité partisane",
+    values = c(
+      "1" = "turquoise3",
+      "0" = "indianred2"
+    ),
+    labels = c(
+      "1" = "Proche d'un parti d'extrême droite populiste",
+      "0" = "Proche d'un autre type de partis"
+    )
+  ) +
+  labs(
+    x = "Attitudes eurosceptiques",
+    y = "Pourcentage de jeunes"
+  ) +
+  theme(
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(
+      linetype = "solid",
+      colour = "grey"
+    )
+  )
+
+
+
+Eur_Ouest
+
+
+
+
+
+
+Graph_data_Ouest <- bind_rows(
+  Pop_data_Ouest %>%
+    mutate(variable = "Attitudes populistes"),
+  
+  Nat_data_Ouest %>%
+    mutate(variable = "Attitudes nativistes"),
+  
+  Aut_data_Ouest %>%
+    mutate(variable = "Attitudes autoritaires"),
+  
+  Eur_data_Ouest %>%
+    mutate(variable = "Attitudes eurosceptiques")
+)
+
+
+Graph_data_Ouest <- Graph_data_Ouest %>%
+  mutate(
+    variable = factor(
+      variable,
+      levels = c(
+        "Attitudes populistes",
+        "Attitudes nativistes",
+        "Attitudes autoritaires",
+        "Attitudes eurosceptiques"
+      )
+    )
+  )
+
+
+
+Graph_Ouest <- ggplot(
+  Graph_data_Ouest,
+  aes(
+    x = intervalle,
+    y = pourcentage,
+    fill = factor(Prox_ED, levels = c(1, 0))
+  )
+) +
+  geom_col(
+    position = position_dodge(width = 0.9),
+    color = "white"
+  ) +
+  geom_text(
+    aes(
+      label = ifelse(
+        round(pourcentage, 1) == 0,
+        "",
+        paste0(round(pourcentage, 1), "%")
+      )
+    ),
+    position = position_dodge(width = 0.9),
+    vjust = -0.3,
+    size = 3
+  ) +
+  facet_wrap(
+    ~ variable,
+    ncol = 2
+  ) +
+  scale_fill_manual(
+    name = "Proximité partisane",
+    values = c(
+      "1" = "turquoise3",
+      "0" = "indianred2"
+    ),
+    labels = c(
+      "1" = "Proche d'un parti d'extrême droite populiste",
+      "0" = "Proche d'un autre type de partis"
+    )
+  ) +
+  labs(
+    x = "Attitudes idéologiques",
+    y = "Pourcentage de jeunes"
+  ) +
+  theme(
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(
+      linetype = "solid",
+      colour = "grey"
+    )
+  )
+
+
+
+
+Graph_Ouest
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+```{r}
+
+
+Pop_data_Ouest <- Data_Ouest_Jeunes %>%
+  filter(!is.na(Populisme_Indice)) %>%
+  mutate(
+    intervalle = cut(
+      Populisme_Indice,
+      breaks = seq(0, 1, 0.1),
+      include.lowest = TRUE
+    )
+  ) %>%
+  count(intervalle) %>%
+  mutate(
+    pourcentage = n / sum(n) * 100
+  )
+
+
+Pop_Ouest <- ggplot(
+  Pop_data_Ouest,
+  aes(
+    x = intervalle,
+    y = pourcentage
+  )
+) +
+  geom_col(
+    fill = "turquoise3",
+    color = "white"
+  ) +
+  geom_text(
+    aes(
+      label = ifelse(
+        round(pourcentage, 1) == 0,
+        "",
+        paste0(round(pourcentage, 1), "%"))
+    ),
+    vjust = -0.3,
+    size = 3
+  ) +
+  labs(
+    x = "Attitudes populistes",
+    y = "Pourcentage de jeunes"
+  ) +
+  theme(
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(
+      linetype = "solid",
+      colour = "grey"
+    )
+  )
+
+
+Pop_Ouest <- ggplot(
+  Pop_data_Ouest,
+  aes(
+    x = intervalle,
+    y = pourcentage
+  )
+) +
+  geom_col(
+    fill = "turquoise3",
+    color = "white"
+  ) +
+      geom_text(
+        aes(
+          label = paste0(round(pourcentage, 2), "%")
+        ),
+        vjust = -0.3,
+        size = 3
+      ) +
+  labs(
+    x = "Attitudes populistes",
+    y = "Pourcentage de jeunes"
+  ) +
+  theme(
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(
+      linetype = "solid",
+      colour = "grey"
+    )
+  )
+Pop_Ouest
+
+
+
+
+
+
+Nat_data_Ouest <- Data_Ouest_Jeunes %>%
+  filter(!is.na(Nativisme_moyenne)) %>%
+  mutate(
+    intervalle = cut(
+      Nativisme_moyenne,
+      breaks = seq(0, 1, 0.1),
+      include.lowest = TRUE
+    )
+  ) %>%
+  count(intervalle) %>%
+  mutate(
+    pourcentage = n / sum(n) * 100
+  )
+
+
+Nat_Ouest <- ggplot(
+  Nat_data_Ouest,
+  aes(
+    x = intervalle,
+    y = pourcentage
+  )
+) +
+  geom_col(
+    fill = "turquoise3",
+    color = "white"
+  ) +
+  geom_text(
+    aes(
+      label = paste0(round(pourcentage, 2), "%")
+    ),
+    vjust = -0.3,
+    size = 3
+  ) +
+  labs(
+    x = "Attitudes nativistes",
+    y = "Pourcentage de jeunes"
+  ) +
+  theme(
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(
+      linetype = "solid",
+      colour = "grey"
+    )
+  )
+
+Nat_Ouest
+
+
+
+
+Aut_data_Ouest <- Data_Ouest_Jeunes %>%
+  filter(!is.na(Autoritarisme_moyenne)) %>%
+  mutate(
+    intervalle = cut(
+      Autoritarisme_moyenne,
+      breaks = seq(0, 1, 0.1),
+      include.lowest = TRUE
+    )
+  ) %>%
+  count(intervalle) %>%
+  mutate(
+    pourcentage = n / sum(n) * 100
+  )
+
+
+
+Aut_Ouest <- ggplot(
+  Aut_data_Ouest,
+  aes(
+    x = intervalle,
+    y = pourcentage
+  )
+) +
+  geom_col(
+    fill = "turquoise3",
+    color = "white"
+  ) +
+  geom_text(
+    aes(
+      label = paste0(round(pourcentage, 2), "%")
+    ),
+    vjust = -0.3,
+    size = 3
+  ) +
+  labs(
+    x = "Attitudes autoritaires",
+    y = "Pourcentage de jeunes"
+  ) +
+  theme(
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(
+      linetype = "solid",
+      colour = "grey"
+    )
+  )
+
+Aut_Ouest
+
+
+
+
+Eur_data_Ouest <- Data_Ouest_Jeunes %>%
+  filter(!is.na(euftf_recoded)) %>%
+  mutate(
+    intervalle = cut(
+      euftf_recoded,
+      breaks = seq(0, 1, 0.1),
+      include.lowest = TRUE
+    )
+  ) %>%
+  count(intervalle) %>%
+  mutate(
+    pourcentage = n / sum(n) * 100
+  )
+
+
+
+Eur_Ouest <- ggplot(
+  Eur_data_Ouest,
+  aes(
+    x = intervalle,
+    y = pourcentage
+  )
+) +
+  geom_col(
+    fill = "turquoise3",
+    color = "white"
+  ) +
+  geom_text(
+    aes(
+      label = paste0(round(pourcentage, 2), "%")
+    ),
+    vjust = -0.3,
+    size = 3
+  ) +
+  labs(
+    x = "Attitudes eurosceptiques",
+    y = "Pourcentage de jeunes"
+  ) +
+  theme(
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(
+      linetype = "solid",
+      colour = "grey"
+    )
+  )
+
+
+Eur_Ouest
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Pop_data_Est <- Data_Est_Jeunes %>%
+  filter(!is.na(Populisme_Indice)) %>%
+  mutate(
+    intervalle = cut(
+      Populisme_Indice,
+      breaks = seq(0, 1, 0.1),
+      include.lowest = TRUE
+    )
+  ) %>%
+  count(intervalle) %>%
+  mutate(
+    pourcentage = n / sum(n) * 100
+  )
+
+
+Pop_Est <- ggplot(
+  Pop_data_Est,
+  aes(
+    x = intervalle,
+    y = pourcentage
+  )
+) +
+  geom_col(
+    fill = "deeppink2",
+    color = "white"
+  ) +
+  geom_text(
+    aes(
+      label = ifelse(
+        round(pourcentage, 2) == 0,
+        "",
+        paste0(round(pourcentage, 1), "%"))
+    ),
+    vjust = -0.3,
+    size = 3
+  ) +
+  labs(
+    x = "Attitudes populistes",
+    y = "Pourcentage de jeunes"
+  ) +
+  theme(
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(
+      linetype = "solid",
+      colour = "grey"
+    )
+  )
+
+Pop_Est
+
+
+
+
+
+
+Nat_data_Est <- Data_Est_Jeunes %>%
+  filter(!is.na(Nativisme_moyenne)) %>%
+  mutate(
+    intervalle = cut(
+      Nativisme_moyenne,
+      breaks = seq(0, 1, 0.1),
+      include.lowest = TRUE
+    )
+  ) %>%
+  count(intervalle) %>%
+  mutate(
+    pourcentage = n / sum(n) * 100
+  )
+
+
+Nat_Est <- ggplot(
+  Nat_data_Est,
+  aes(
+    x = intervalle,
+    y = pourcentage
+  )
+) +
+  geom_col(
+    fill = "deeppink2",
+    color = "white"
+  ) +
+  geom_text(
+    aes(
+      label = paste0(round(pourcentage, 2), "%")
+    ),
+    vjust = -0.3,
+    size = 3
+  ) +
+  labs(
+    x = "Attitudes nativistes",
+    y = "Pourcentage de jeunes"
+  ) +
+  theme(
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(
+      linetype = "solid",
+      colour = "grey"
+    )
+  )
+
+Nat_Est
+
+
+
+
+Aut_data_Est <- Data_Est_Jeunes %>%
+  filter(!is.na(Autoritarisme_moyenne)) %>%
+  mutate(
+    intervalle = cut(
+      Autoritarisme_moyenne,
+      breaks = seq(0, 1, 0.1),
+      include.lowest = TRUE
+    )
+  ) %>%
+  count(intervalle) %>%
+  mutate(
+    pourcentage = n / sum(n) * 100
+  )
+
+
+
+Aut_Est <- ggplot(
+  Aut_data_Est,
+  aes(
+    x = intervalle,
+    y = pourcentage
+  )
+) +
+  geom_col(
+    fill = "deeppink2",
+    color = "white"
+  ) +
+  geom_text(
+    aes(
+      label = paste0(round(pourcentage, 2), "%")
+    ),
+    vjust = -0.3,
+    size = 3
+  ) +
+  labs(
+    x = "Attitudes autoritaires",
+    y = "Pourcentage de jeunes"
+  ) +
+  theme(
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(
+      linetype = "solid",
+      colour = "grey"
+    )
+  )
+
+Aut_Est
+
+
+
+
+Eur_data_Est <- Data_Est_Jeunes %>%
+  filter(!is.na(euftf_recoded)) %>%
+  mutate(
+    intervalle = cut(
+      euftf_recoded,
+      breaks = seq(0, 1, 0.1),
+      include.lowest = TRUE
+    )
+  ) %>%
+  count(intervalle) %>%
+  mutate(
+    pourcentage = n / sum(n) * 100
+  )
+
+
+
+Eur_Est <- ggplot(
+  Eur_data_Est,
+  aes(
+    x = intervalle,
+    y = pourcentage
+  )
+) +
+  geom_col(
+    fill = "deeppink2",
+    color = "white"
+  ) +
+  geom_text(
+    aes(
+      label = paste0(round(pourcentage, 2), "%")
+    ),
+    vjust = -0.3,
+    size = 3
+  ) +
+  labs(
+    x = "Attitudes eurosceptiques",
+    y = "Pourcentage de jeunes"
+  ) +
+  theme(
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(
+      linetype = "solid",
+      colour = "grey"
+    )
+  )
+
+
+Eur_Est
+
+
+
+
+
+
+Graph_data_Est <- bind_rows(
+  Pop_data_Est %>%
+    mutate(variable = "Attitudes populistes"),
+  
+  Nat_data_Est %>%
+    mutate(variable = "Attitudes nativistes"),
+  
+  Aut_data_Est %>%
+    mutate(variable = "Attitudes autoritaires"),
+  
+  Eur_data_Est %>%
+    mutate(variable = "Attitudes eurosceptiques")
+)
+
+
+Graph_data_Est <- Graph_data_Est %>%
+  mutate(
+    variable = factor(
+      variable,
+      levels = c(
+        "Attitudes populistes",
+        "Attitudes nativistes",
+        "Attitudes autoritaires",
+        "Attitudes eurosceptiques"
+      )
+    )
+  )
+
+
+
+
+
+
+
+
+
+
+
+
+Nat_data <- bind_rows(
+  Nat_data_Est %>%
+    mutate(region = "Est"),
+  
+  Nat_data_Ouest %>%
+    mutate(region = "Ouest")
+) %>%
+  mutate(
+    region = factor(
+      region,
+      levels = c("Est", "Ouest")
+    )
+  )
+
+
+Nat <- ggplot(
+  Nat_data,
+  aes(
+    x = intervalle,
+    y = pourcentage,
+    fill = region
+  )
+) +
+  geom_col(
+    color = "white"
+  ) +
+  geom_text(
+    aes(
+      label = paste0(round(pourcentage, 2), "%")
+    ),
+    vjust = -0.3,
+    size = 3
+  ) +
+  facet_wrap(~ region) +
+  scale_fill_manual(
+    values = c(
+      "Est" = "deeppink2",
+      "Ouest" = "turquoise3"
+    )
+  ) +
+  labs(
+    x = "Attitudes nativistes",
+    y = "Pourcentage de jeunes"
+  ) +
+  theme(
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(
+      linetype = "solid",
+      colour = "grey"
+    ),
+    
+    # Étiquettes Est / Ouest
+    strip.background = element_rect(
+      fill = "white",
+      color = "black",
+      linewidth = 0.8
+    ),
+    strip.text = element_text(
+      color = "black",
+      size = 12
+    ),
+    
+    legend.position = "none"
+  )
+
+Nat
+
+
+
+ggsave(
+  "Graph_data_nativisme_regions.jpg",
+  plot = Nat,
+  width = 10,
+  height = 6,
+  dpi = 300
+)
+
+
+
+
+Pop_data <- bind_rows(
+  Pop_data_Est %>%
+    mutate(region = "Est"),
+  
+  Pop_data_Ouest %>%
+    mutate(region = "Ouest")
+) %>%
+  mutate(
+    region = factor(
+      region,
+      levels = c("Est", "Ouest")
+    )
+  )
+
+
+
+Pop <- ggplot(
+  Pop_data,
+  aes(
+    x = intervalle,
+    y = pourcentage,
+    fill = region
+  )
+) +
+  geom_col(
+    color = "white"
+  ) +
+  geom_text(
+    aes(
+      label = paste0(round(pourcentage, 2), "%")
+    ),
+    vjust = -0.3,
+    size = 3
+  )  +
+  facet_wrap(~ region) +
+  scale_fill_manual(
+    values = c(
+      "Est" = "deeppink2",
+      "Ouest" = "turquoise3"
+    )
+  ) +
+  labs(
+    x = "Attitudes populistes",
+    y = "Pourcentage de jeunes"
+  ) +
+  theme(
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(
+      linetype = "solid",
+      colour = "grey"
+    ),
+    
+    strip.background = element_rect(
+      fill = "white",
+      color = "black",
+      linewidth = 0.8
+    ),
+    
+    strip.text = element_text(
+      color = "black",
+      size = 12
+    ),
+    
+    legend.position = "none"
+  )
+
+Pop
+
+
+ggsave(
+  "Graph_data_populisme_regions.jpg",
+  plot = Pop,
+  width = 10,
+  height = 6,
+  dpi = 300
+)
+
+
+Aut_data <- bind_rows(
+  Aut_data_Est %>%
+    mutate(region = "Est"),
+  
+  Aut_data_Ouest %>%
+    mutate(region = "Ouest")
+) %>%
+  mutate(
+    region = factor(
+      region,
+      levels = c("Est", "Ouest")
+    )
+  )
+
+
+
+Aut <- ggplot(
+  Aut_data,
+  aes(
+    x = intervalle,
+    y = pourcentage,
+    fill = region
+  )
+) +
+  geom_col(
+    color = "white"
+  ) +
+  geom_text(
+    aes(
+      label = paste0(round(pourcentage, 2), "%")
+    ),
+    vjust = -0.3,
+    size = 3
+  ) +
+  facet_wrap(~ region) +
+  scale_fill_manual(
+    values = c(
+      "Est" = "deeppink2",
+      "Ouest" = "turquoise3"
+    )
+  ) +
+  labs(
+    x = "Attitudes autoritaires",
+    y = "Pourcentage de jeunes"
+  ) +
+  theme(
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(
+      linetype = "solid",
+      colour = "grey"
+    ),
+    
+    strip.background = element_rect(
+      fill = "white",
+      color = "black",
+      linewidth = 0.8
+    ),
+    
+    strip.text = element_text(
+      color = "black",
+      size = 12
+    ),
+    
+    legend.position = "none"
+  )
+
+Aut
+
+
+ggsave(
+  "Graph_data_autoritarisme_regions.jpg",
+  plot = Aut,
+  width = 10,
+  height = 6,
+  dpi = 300
+)
+
+
+
+
+
+
+Eur_data <- bind_rows(
+  Eur_data_Est %>%
+    mutate(region = "Est"),
+  
+  Eur_data_Ouest %>%
+    mutate(region = "Ouest")
+) %>%
+  mutate(
+    region = factor(
+      region,
+      levels = c("Est", "Ouest")
+    )
+  )
+
+
+
+Eur <- ggplot(
+  Eur_data,
+  aes(
+    x = intervalle,
+    y = pourcentage,
+    fill = region
+  )
+) +
+  geom_col(
+    color = "white"
+  ) +
+  geom_text(
+    aes(
+      label = paste0(round(pourcentage, 2), "%")
+    ),
+    vjust = -0.3,
+    size = 3
+  ) +
+  facet_wrap(~ region) +
+  scale_fill_manual(
+    values = c(
+      "Est" = "deeppink2",
+      "Ouest" = "turquoise3"
+    )
+  ) +
+  labs(
+    x = "Attitudes eurosceptiques",
+    y = "Pourcentage de jeunes"
+  ) +
+  theme(
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(
+      linetype = "solid",
+      colour = "grey"
+    ),
+    
+    strip.background = element_rect(
+      fill = "white",
+      color = "black",
+      linewidth = 0.8
+    ),
+    
+    strip.text = element_text(
+      color = "black",
+      size = 12
+    ),
+    
+    legend.position = "none"
+  )
+
+Eur
+
+ggsave(
+  "Graph_data_euroscepticisme_regions.jpg",
+  plot = Eur,
+  width = 10,
+  height = 6,
+  dpi = 300
+)
+
+
+
+
+Prox_region <- Data_Jeunes %>%
+  filter(!is.na(Prox_ED), !is.na(Region)) %>%
+  count(Region, Prox_ED) %>%
+  group_by(Region) %>%
+  mutate(
+    pourcentage = n / sum(n) * 100
+  ) %>%
+  ungroup()
+
+
+
+
+
+Graph_Prox_region <- ggplot(
+  Prox_region,
+  aes(
+    x = factor(Prox_ED),
+    y = pourcentage,
+    fill = Region
+  )
+) +
+  geom_col(
+    position = position_dodge(width = 0.9),
+    color = "white"
+  ) +
+  geom_text(
+    aes(
+      label = ifelse(
+        round(pourcentage, 2) == 0,
+        "",
+        paste0(round(pourcentage, 2), "%")
+      )
+    ),
+    position = position_dodge(width = 0.9),
+    vjust = -0.3,
+    size = 3
+  ) + scale_fill_manual(
+    values = c(
+      "Est" = "deeppink2",
+      "Ouest" = "turquoise3"
+    )
+  ) +
+  scale_x_discrete(
+    labels = c(
+      "0" = "Autre type de parti",
+      "1" = "Parti d'extrême droite populiste"
+    )
+  ) +
+  labs(
+    x = "Proximité partisane",
+    y = "Pourcentage de jeunes",
+    fill = "Région"
+  ) +
+  theme(
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(
+      linetype = "solid",
+      colour = "grey"
+    )
+  )
+
+Graph_Prox_region
+
+
+
+
+ggsave(
+  "Graph_prox_ed_regions.jpg",
+  plot = Graph_Prox_region,
+  width = 10,
+  height = 6,
+  dpi = 300
+)
+
+```
+
+```{r}
+
+Data_Est_Jeunes <- Data_Est_Jeunes %>% mutate (PEDP_pouv = ifelse(cntry %in% c("HU", "PL"), 1, 0))
+
+table(Data_Est_Jeunes $ PEDP_pouv)
+
+
+
+Model_Est <- glm(Prox_ED ~  gender + Niv_education + Revenu_conf  + Milieu_rural_urbain + Populisme_Indice + Nativisme_moyenne + Autoritarisme_moyenne + euftf_recoded + Populisme_Indice * PEDP_pouv, family = binomial(link = "logit"), data = Data_Est_Jeunes)
+
+summary(Model_Est)
+
+```
